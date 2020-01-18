@@ -1,4 +1,8 @@
 
+/collect/settings/*
+!/collect/settings/base.py
+!/collect/settings/*.template
+
 *.pyc
 __pycache__/
 
