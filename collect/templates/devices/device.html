@@ -11,15 +11,9 @@
 <h1>Device {{object.name}}</h1>
 
 <h2>Data</h2>
-	<table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle">
-		<tr><th>Date added</th><th>Data</th></tr>
-		{% for m in object.measurement_set|order_by:'-date_added' %}
-			<tr>
-				<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
-				<td>{{m.data}}</td>
-			</tr>
-		{% endfor %}
-	</table>
+	<div class="div-ajax">
+		{% include "devices/device_measurements.html" with measurements_page=measurements_page measurements_extra=measurements_extra only %}
+	</div>
 
 
 <div class="margin-bottom-200px"></div>

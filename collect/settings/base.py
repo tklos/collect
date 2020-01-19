@@ -73,6 +73,7 @@ TEMPLATES = [
             ],
             'libraries': {
                 'common_tags': 'lib.templatetags.common_templatetags',
+                'pagination_tags': 'lib.templatetags.pagination_templatetags',
             },
         },
     },
@@ -136,4 +137,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+
+# Pagination
+MEASUREMENTS_PAGINATE_BY = 30
 
