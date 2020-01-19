@@ -7,6 +7,7 @@ en_formats.DATETIME_FORMAT = 'Y-m-d H:i:s'
 ordering = {
     'Users': 0,
     'Devices': 1,
+    'Measurements': 2,
 }
 
 

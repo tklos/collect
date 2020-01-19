@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'lib.settings',
     'users',
     'devices',
+    'measurements',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +73,7 @@ TEMPLATES = [
             ],
             'libraries': {
                 'common_tags': 'lib.templatetags.common_templatetags',
+                'pagination_tags': 'lib.templatetags.pagination_templatetags',
             },
         },
     },
@@ -111,7 +113,7 @@ LOGIN_REDIRECT_URL = 'profile:home'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Warsaw'
 
 USE_I18N = True
 
@@ -135,4 +137,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+
+# Pagination
+MEASUREMENTS_PAGINATE_BY = 30
 

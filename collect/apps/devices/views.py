@@ -3,6 +3,8 @@ import random
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
@@ -58,9 +60,57 @@ class DeviceAddView(CreateView):
         return super().form_invalid(form)
 
 
-class DeviceView(DetailView):
+class DeviceMeasurementsMixin:
+
+    def get_measurements_context(self, device, page):
+        measurements = device.measurement_set.order_by('-date_added').all()
+
+        measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
+        measurements_page = measurements_paginator.get_page(page)
+
+        return {
+            'measurements_page': measurements_page,
+            'measurements_extra': {
+                'd_sid': device.sequence_id
+            },
+        }
+
+
+class DeviceView(DeviceMeasurementsMixin, DetailView):
     template_name = 'devices/device.html'
 
     def get_object(self, queryset=None):
         return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        m_context = self.get_measurements_context(self.object, 1)
+        context.update(m_context)
+
+        return context
+
+
+class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
+    template_name = 'devices/device_measurements.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        assert request.is_ajax(), 'Ajax request expected'
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, d_sid, page, **kwargs):
+        device = Device.objects.get(user=self.request.user, sequence_id=d_sid)
+
+        context = super().get_context_data(**kwargs)
+        m_context = self.get_measurements_context(device, page)
+        context.update(m_context)
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+
+        data = {
+            'html': response.rendered_content,
+        }
+        return JsonResponse(data)
 
