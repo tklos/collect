@@ -1,6 +1,9 @@
 
 $(document).ready(function() {
 
+	$('[data-toggle="tooltip"]').tooltip();
+
+
 	/* Pagination */
 	$("body").on("click", "a.a-paginator", function(event) {
 		event.preventDefault();

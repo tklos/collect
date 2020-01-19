@@ -32,6 +32,9 @@ class DeviceAddView(CreateView):
             form.add_error('name', 'Device with this name already exists')
             return self.form_invalid(form)
 
+        # Number of columns
+        form.instance.num_columns = 0 if form.instance.columns is None else len(form.instance.columns.split(','))
+
         # Create API key
         api_key = ''.join(random.sample(self.API_KEY_CHARS, k=const.DEVICE_API_KEY_LEN))
         token = api_key[:const.DEVICE_TOKEN_LEN]
@@ -69,6 +72,7 @@ class DeviceMeasurementsMixin:
         measurements_page = measurements_paginator.get_page(page)
 
         return {
+            'device_columns': [] if device.columns is None else device.columns.split(','),
             'measurements_page': measurements_page,
             'measurements_extra': {
                 'd_sid': device.sequence_id
@@ -94,13 +98,16 @@ class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
     template_name = 'devices/device_measurements.html'
 
     def dispatch(self, request, *args, **kwargs):
-        assert request.is_ajax(), 'Ajax request expected'
+        if not request.is_ajax():
+            raise RuntimeError('Ajax request expected')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, d_sid, page, **kwargs):
-        device = Device.objects.get(user=self.request.user, sequence_id=d_sid)
-
         context = super().get_context_data(**kwargs)
+
+        device = Device.objects.get(user=self.request.user, sequence_id=d_sid)
+        context['object'] = device
+
         m_context = self.get_measurements_context(device, page)
         context.update(m_context)
 
