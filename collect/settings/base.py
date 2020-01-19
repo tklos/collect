@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'lib.settings',
     'users',
     'devices',
+    'measurements',
 ]
 
 MIDDLEWARE = [

@@ -55,6 +55,11 @@ td.td-ul-no-margin-bottom ul {
 	margin-bottom: 0px;
 }
 
+.table-padding-3 > tbody > tr > td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
 
 /* Other */
 .btn-padding-tb-sm {
