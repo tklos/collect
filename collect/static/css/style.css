@@ -57,8 +57,23 @@ td.td-ul-no-margin-bottom ul {
 
 
 /* Other */
+.btn-padding-tb-sm {
+	padding-top: 4px;
+	padding-bottom: 4px;
+	padding-left: 9px;
+	padding-right: 9px;
+}
+
+.monospace {
+	font-family: monospace;
+}
+
 .width-auto {
 	width: auto;
+}
+
+.width-1px {
+	width: 1px;
 }
 
 .no-margin-bottom {
