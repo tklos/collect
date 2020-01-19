@@ -1,0 +1,91 @@
+/* Navbar */
+.navbar-register {
+	color: #9d9d9d;
+	border: 1px solid #9d9d9d;
+}
+
+.navbar-register:hover {
+	color: #222;
+	background: #9d9d9d;
+}
+
+.navbar-primary {
+	color: #609dd2;
+	font-weight: bold;
+	background-color: transparent;
+	border: 1.3px solid #609dd2;
+}
+
+.navbar-primary:hover {
+	color: #609dd2;
+	background: #224f77;
+}
+
+.p-navbar-primary-btn  {
+	padding: 0px 0px 0px 15px;
+	margin-top: 7.5px;
+	margin-bottom: 7.5px;
+}
+
+.navbar-inverse .navbar-brand {
+	color: #e6e6e6;
+}
+
+.navbar-brand > img {
+	height: 100%;
+	width: auto;
+}
+
+
+/* Table */
+table.table-no-border > tbody > tr > td, table.table-no-border > tbody > tr > th {
+	border: none !important;
+}
+
+table.table-center {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+table.table-td-vertical-align-middle > tbody > tr > td, table.table-td-vertical-align-middle > tbody > tr > th {
+	vertical-align: middle !important;
+}
+
+td.td-ul-no-margin-bottom ul {
+	margin-bottom: 0px;
+}
+
+
+/* Other */
+.width-auto {
+	width: auto;
+}
+
+.no-margin-bottom {
+	margin-bottom: 0px;
+}
+
+.margin-bottom-5px {
+	margin-bottom: 5px;
+}
+
+.margin-bottom-10px {
+	margin-bottom: 10px;
+}
+
+.margin-bottom-200px {
+	margin-bottom: 200px;
+}
+
+.padding-r-15 {
+	padding-right: 15px;
+}
+
+.horizontal-align-center {
+	text-align: center;
+}
+
+.horizontal-align-right {
+	text-align: right;
+}
+

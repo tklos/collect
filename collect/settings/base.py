@@ -87,21 +87,18 @@ AUTH_USER_MODEL = 'users.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'OPTIONS': {
+            'min_length': 6,
+        },
     },
 ]
+
+# Login
+LOGIN_URL = 'account:login'
+LOGIN_REDIRECT_URL = 'profile:home'
 
 
 # Internationalization
@@ -116,6 +113,13 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+
+# Messages
+from django.contrib import messages
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}
 
 
 # Static files (CSS, JavaScript, Images)
