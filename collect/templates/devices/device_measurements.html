@@ -1,0 +1,23 @@
+
+{% load common_tags %}
+
+
+<table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle table-ajax">
+	<tr>
+		<th>Date added</th>
+		{% for column in device_columns %}
+			<th>{{column}}</th>
+		{% endfor %}
+	</tr>
+	{% for m in measurements_page %}
+		<tr>
+			<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
+			{% for ind in object.num_columns|range_ %}
+				<td>{{m.data.data|get_at_index:ind}}</td>
+			{% endfor %}
+		</tr>
+	{% endfor %}
+</table>
+
+{% include "common/pagination.html" with paginator_page=measurements_page ajax_url="devices:pagination-measurements" extra=measurements_extra only %}
+

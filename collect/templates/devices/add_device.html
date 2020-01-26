@@ -1,0 +1,26 @@
+
+<form method="post" action="{% url 'devices:add' %}">
+    {% csrf_token %}
+    <table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
+        <tr>
+			<td colspan="2">{{form.name.label_tag}}</td>
+			<td>{{form.name}}</td>
+		</tr>
+        <tr>
+			<td>{{form.columns.label_tag}}</td>
+			<td><div data-toggle="tooltip" title='Comma-separated list of column names, e.g. "latitude,longitude,elevation"'><span class="glyphicon glyphicon-info-sign glyphicon-margin" aria-hidden="true"></span></div></td>
+			<td>{{form.columns}}</td>
+		</tr>
+        {% if form.errors %}
+            {% include "common/form_errors.html" with form=form colspan=3 only %}
+        {% endif %}
+		<tr>
+            <td></td>
+			<td></td>
+            <td>
+                <input type="submit" value="Submit" class="btn btn-primary"/>
+            </td>
+        </tr>
+	</table>
+</form>
+
