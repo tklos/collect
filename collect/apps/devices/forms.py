@@ -9,6 +9,7 @@ class DeviceAddForm(forms.ModelForm):
         model = Device
         fields = (
             'name',
+            'columns',
         )
 
     def __init__(self, *args, **kwargs):
@@ -20,4 +21,6 @@ class DeviceAddForm(forms.ModelForm):
         }
 
         self.fields['name'].widget.attrs.update(text_field_attrs)
+
+        self.fields['columns'].widget.attrs.update(text_field_attrs)
 

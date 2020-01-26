@@ -10,6 +10,11 @@ def get_at_index(obj, index):
 
 
 @register.filter
+def range_(number):
+    return range(number)
+
+
+@register.filter
 def order_by(obj, args):
     args = args.split(',')
     return obj.order_by(*args)
