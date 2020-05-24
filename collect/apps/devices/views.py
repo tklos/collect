@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
+from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
 
 from .models import Device
@@ -93,6 +94,39 @@ class DeviceView(DeviceMeasurementsMixin, DetailView):
         context.update(m_context)
 
         return context
+
+
+class DevicePlotDataView(View):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.is_ajax():
+            raise RuntimeError('Ajax request expected')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get(self, request, *args, **kwargs):
+        device = self.get_device()
+        measurements = device.measurement_set.order_by('-date_added')[:100]
+
+        # Process measurements
+        time_, data = [], [[] for _ in range(len(device.columns))]
+        for measurement in measurements:
+            time_.append(measurement.date_added)
+            for idx, value in enumerate(measurement.data):
+                data[idx].append(value)
+
+        # Set ascending order
+        time_ = reversed(time_)
+        data = [list(reversed(d)) for d in data]
+
+        data = {
+            'time': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_],
+            'data': data,
+            'labels': device.columns,
+        }
+        return JsonResponse(data)
 
 
 class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
