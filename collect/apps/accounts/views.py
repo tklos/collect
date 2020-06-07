@@ -22,6 +22,6 @@ class RegisterView(CreateView):
 
     def form_valid(self, form):
         ret = super().form_valid(form)
-        messages.success(self.request, 'User {} registered. You can log in now'.format(self.object.username))
+        messages.success(self.request, f'User {self.object.username} registered. You can log in now')
         return ret
 

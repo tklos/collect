@@ -24,16 +24,17 @@ class DeviceAddView(CreateView):
     API_KEY_CHARS = string.ascii_letters + string.digits
 
     def form_valid(self, form):
-        user = form.instance.user = self.request.user
+        user = self.request.user
         name = form.cleaned_data['name']
+        columns = form.cleaned_data['columns']
 
         # Check if name is correct
         if Device.objects.filter(user=user, name=name).first() is not None:
             form.add_error('name', 'Device with this name already exists')
             return self.form_invalid(form)
 
-        # Number of columns
-        form.instance.num_columns = 0 if form.instance.columns is None else len(form.instance.columns.split(','))
+        form.instance.user = user
+        form.instance.columns = columns
 
         # Create API key
         api_key = ''.join(random.sample(self.API_KEY_CHARS, k=const.DEVICE_API_KEY_LEN))
@@ -47,7 +48,8 @@ class DeviceAddView(CreateView):
 
         ret = super().form_valid(form)
 
-        messages.success(self.request, mark_safe('Device {} added.<br/>API key: <b>{}</b><br/>Please save it as it is shown only once'.format(name, api_key)))
+        msg = f'Device {name} added.<br/>API key: <b>{api_key}</b><br/>Please save it as it is shown only once'
+        messages.success(self.request, mark_safe(msg))
 
         return ret
 
@@ -72,7 +74,6 @@ class DeviceMeasurementsMixin:
         measurements_page = measurements_paginator.get_page(page)
 
         return {
-            'device_columns': [] if device.columns is None else device.columns.split(','),
             'measurements_page': measurements_page,
             'measurements_extra': {
                 'd_sid': device.sequence_id
