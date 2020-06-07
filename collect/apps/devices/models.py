@@ -38,9 +38,13 @@ class Device(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk is None:
-            last_seq_id = Device.objects \
-                .filter(user=self.user) \
-                .aggregate(ret=Coalesce(Max('sequence_id'), 0))['ret']
+            last_seq_id = (
+                Device
+                .objects
+                .filter(user=self.user)
+                .aggregate(ret=Coalesce(Max('sequence_id'), 0))
+                ['ret']
+            )
 
             self.sequence_id = last_seq_id + 1
 
