@@ -13,8 +13,8 @@ class MeasurementSerializer(serializers.ModelSerializer):
 
     def validate_data(self, value):
         device = self.context['device']
-        if len(value) != device.num_columns:
-            raise serializers.ValidationError('Expected {} columns; got {}'.format(device.num_columns, len(value)))
+        if len(value) != len(device.columns):
+            raise serializers.ValidationError('Expected {} columns; got {}'.format(len(device.columns), len(value)))
         return value
 
     def create(self, validated_data):

@@ -12,7 +12,6 @@ class Device(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='device_set')
     sequence_id = models.IntegerField()
     name = models.CharField(max_length=30)
-    num_columns = models.IntegerField()
     columns = JSONField()
     token = models.CharField(max_length=const.DEVICE_TOKEN_LEN)
     salt = models.CharField(max_length=const.DEVICE_SALT_LEN)

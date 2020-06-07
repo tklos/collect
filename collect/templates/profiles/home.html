@@ -16,7 +16,7 @@
 				<td>{{d.sequence_id}}</td>
 				<td>{{d.name}}</td>
 				<td class="monospace">{{d.get_api_key_display}}</td>
-				<td>{{d.num_columns}}</td>
+				<td>{{d.columns|length}}</td>
 				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'devices:device' d_sid=d.sequence_id %}">View</a></td>
 			</tr>
 		{% endfor %}
