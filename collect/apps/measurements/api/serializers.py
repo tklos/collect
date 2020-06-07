@@ -20,7 +20,7 @@ class MeasurementSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         obj = Measurement.objects.create(
             device=self.context['device'],
-            data={'data': validated_data['data']},
+            data=validated_data['data'],
         )
         return obj
 
