@@ -74,6 +74,7 @@ TEMPLATES = [
             'libraries': {
                 'common_tags': 'lib.templatetags.common_templatetags',
                 'pagination_tags': 'lib.templatetags.pagination_templatetags',
+                'timezone_tags': 'lib.templatetags.timezone_templatetags',
             },
         },
     },
@@ -113,7 +114,7 @@ LOGIN_REDIRECT_URL = 'profile:home'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Europe/Warsaw'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -137,6 +138,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+
+# Timezone
+LOCAL_TIMEZONE = 'Europe/Warsaw'
 
 
 # Pagination
