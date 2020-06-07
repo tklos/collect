@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Max
 from django.db.models.functions import Coalesce
@@ -12,7 +13,7 @@ class Device(models.Model):
     sequence_id = models.IntegerField()
     name = models.CharField(max_length=30)
     num_columns = models.IntegerField()
-    columns = models.CharField(max_length=200, null=True, blank=True)
+    columns = JSONField()
     token = models.CharField(max_length=const.DEVICE_TOKEN_LEN)
     salt = models.CharField(max_length=const.DEVICE_SALT_LEN)
     api_key_hash = models.CharField(max_length=64)

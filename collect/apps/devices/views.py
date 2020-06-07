@@ -26,6 +26,7 @@ class DeviceAddView(CreateView):
     def form_valid(self, form):
         user = form.instance.user = self.request.user
         name = form.cleaned_data['name']
+        columns = form.cleaned_data['columns']
 
         # Check if name is correct
         if Device.objects.filter(user=user, name=name).first() is not None:
@@ -33,7 +34,8 @@ class DeviceAddView(CreateView):
             return self.form_invalid(form)
 
         # Number of columns
-        form.instance.num_columns = 0 if form.instance.columns is None else len(form.instance.columns.split(','))
+        form.instance.columns = columns
+        form.instance.num_columns = len(columns)
 
         # Create API key
         api_key = ''.join(random.sample(self.API_KEY_CHARS, k=const.DEVICE_API_KEY_LEN))
@@ -72,7 +74,7 @@ class DeviceMeasurementsMixin:
         measurements_page = measurements_paginator.get_page(page)
 
         return {
-            'device_columns': [] if device.columns is None else device.columns.split(','),
+            'device_columns': device.columns,
             'measurements_page': measurements_page,
             'measurements_extra': {
                 'd_sid': device.sequence_id
