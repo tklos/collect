@@ -2,11 +2,6 @@
 <html lang="en">
 
 {% load static %}
-{% load tz %}
-{% load timezone_tags %}
-
-{% get_user_timezone user as user_timezone %}
-{% timezone user_timezone %}
 
 
 <head>
@@ -78,7 +73,4 @@
 	{% block end-body %}{% endblock %}
 </body>
 </html>
-
-
-{% endtimezone %}
 

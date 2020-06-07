@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import pytz
 import sys
 
 
@@ -54,6 +55,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'lib.middleware.timezone.TimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'collect.urls'
@@ -74,7 +77,6 @@ TEMPLATES = [
             'libraries': {
                 'common_tags': 'lib.templatetags.common_templatetags',
                 'pagination_tags': 'lib.templatetags.pagination_templatetags',
-                'timezone_tags': 'lib.templatetags.timezone_templatetags',
             },
         },
     },
@@ -141,7 +143,7 @@ STATICFILES_DIRS = [
 
 
 # Timezone
-LOCAL_TIMEZONE = 'Europe/Warsaw'
+LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
 # Pagination
