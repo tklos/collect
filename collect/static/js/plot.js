@@ -33,6 +33,12 @@ $(document).ready(function() {
 				mode: "nearest",
 				intersect: true,
 			},
+			scales: {
+				xAxes: [{
+					type: "linear",
+					distribution: "series",
+				}],
+			},
 		},
 	}
 
@@ -54,7 +60,11 @@ $(document).ready(function() {
 				for (var idx = 0; idx < data.labels.length; idx++) {
 					var dataset = {};
 					dataset.label = data.labels[idx];
-					dataset.data = data.data[idx];
+
+					/* Create data */
+					dataset.data = [];
+					for (var time_idx = 0; time_idx < data.time.length; time_idx++)
+						dataset.data.push({x: data.time[time_idx], y: data.data[idx][time_idx]});
 
 					dataset.borderColor = COLOURS[idx];
 					dataset.backgroundColor = COLOURS[idx];
