@@ -99,6 +99,9 @@ class DeviceView(DeviceMeasurementsMixin, DetailView):
 
 
 class DevicePlotDataView(View):
+    DEFAULT_NUM_DATA_PTS = 360
+    MAX_TIME_RANGE = timedelta(hours=6)
+
     XTICK_INTERVALS = [
         timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
         timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
@@ -116,7 +119,7 @@ class DevicePlotDataView(View):
 
     def get(self, request, *args, **kwargs):
         device = self.get_device()
-        measurements = device.measurement_set.order_by('-date_added')[:100]
+        measurements = self._get_measurements(device)
 
         # Process measurements
         time_dt, data = [], [[] for _ in range(len(device.columns))]
@@ -124,11 +127,6 @@ class DevicePlotDataView(View):
             time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
             for idx, value in enumerate(measurement.data):
                 data[idx].append(value)
-
-        # Set ascending order
-        time_dt.reverse()
-        for d in data:
-            d.reverse()
 
         # Convert to unix timestamp
         time_e = [t.timestamp() for t in time_dt]
@@ -150,6 +148,17 @@ class DevicePlotDataView(View):
             'xticklabels': xticklabels,
         }
         return JsonResponse(data)
+
+    @classmethod
+    def _get_measurements(cls, device):
+        measurements = list(reversed(device.measurement_set.order_by('-date_added')[:cls.DEFAULT_NUM_DATA_PTS]))
+        if not measurements:
+            return measurements
+
+        min_time = measurements[-1].date_added - cls.MAX_TIME_RANGE
+        # FIXME use binary search
+        first_idx = next(idx for idx, el in enumerate(measurements) if min_time < el.date_added)
+        return measurements[first_idx:]
 
     def _calculate_xticks(self, begin_dt, end_dt):
         begin_dt_utc, end_dt_utc = begin_dt.replace(tzinfo=timezone.utc), end_dt.replace(tzinfo=timezone.utc)
