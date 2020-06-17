@@ -10,6 +10,9 @@ $(document).ready(function() {
 			labels: [],
 			datasets: [],
 			time_fmt: [],
+			xlimits: [],
+			xticks: [],
+			xticklabels: [],
 		},
 		options: {
 			tooltips: {
@@ -37,6 +40,17 @@ $(document).ready(function() {
 				xAxes: [{
 					type: "linear",
 					distribution: "series",
+					ticks: {
+						callback: function(tick_value, index, ticks) {
+							return config.data.xticklabels[index];
+						},
+					},
+					afterBuildTicks: function(axis, ticks) {
+						/* Sets axis limits and returns tick locations */
+						axis.min = config.data.xlimits[0];
+						axis.max = config.data.xlimits[1];
+						return config.data.xticks;
+					},
 				}],
 			},
 		},
@@ -56,6 +70,9 @@ $(document).ready(function() {
 			success: function(data) {
 				config.data.labels = data.time;
 				config.data.time_fmt = data.time_fmt;
+				config.data.xlimits = data.xlimits;
+				config.data.xticks = data.xticks;
+				config.data.xticklabels = data.xticklabels;
 
 				for (var idx = 0; idx < data.labels.length; idx++) {
 					var dataset = {};

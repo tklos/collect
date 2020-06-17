@@ -1,5 +1,7 @@
+import math
 import string
 import random
+from datetime import timedelta, timezone, datetime
 
 from django.conf import settings
 from django.contrib import messages
@@ -97,6 +99,12 @@ class DeviceView(DeviceMeasurementsMixin, DetailView):
 
 
 class DevicePlotDataView(View):
+    XTICK_INTERVALS = [
+        timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
+        timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
+        timedelta(days=1),
+    ]
+    MAX_NUM_XTICKS = 7
 
     def dispatch(self, request, *args, **kwargs):
         if not request.is_ajax():
@@ -111,24 +119,67 @@ class DevicePlotDataView(View):
         measurements = device.measurement_set.order_by('-date_added')[:100]
 
         # Process measurements
-        time_, data = [], [[] for _ in range(len(device.columns))]
+        time_dt, data = [], [[] for _ in range(len(device.columns))]
         for measurement in measurements:
-            time_.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
+            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
             for idx, value in enumerate(measurement.data):
                 data[idx].append(value)
 
         # Set ascending order
-        time_.reverse()
+        time_dt.reverse()
         for d in data:
             d.reverse()
 
+        # Convert to unix timestamp
+        time_e = [t.timestamp() for t in time_dt]
+
+        # Calculate xlimits, ticks and labels
+        xlim_dt = (time_dt[0], time_dt[-1])
+        xlim_e = (time_e[0], time_e[-1])
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        # Return data
         data = {
-            'time': [t.timestamp() for t in time_],
-            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_],
-            'data': data,
             'labels': device.columns,
+            'time': time_e,
+            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dt],
+            'data': data,
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
         }
         return JsonResponse(data)
+
+    def _calculate_xticks(self, begin_dt, end_dt):
+        begin_dt_utc, end_dt_utc = begin_dt.replace(tzinfo=timezone.utc), end_dt.replace(tzinfo=timezone.utc)
+        begin_e, end_e = begin_dt_utc.timestamp(), end_dt_utc.timestamp()
+
+        for interval in self.XTICK_INTERVALS:
+            interval_s = int(interval.total_seconds())
+
+            min_e, max_e = math.ceil(begin_e / interval_s) * interval_s, math.floor(end_e / interval_s) * interval_s
+
+            num_ticks = (max_e - min_e) // interval_s + 1
+            if num_ticks > self.MAX_NUM_XTICKS:
+                continue
+
+            xticks_e = [min_e + i * interval_s for i in range(num_ticks)]
+            xticks_dt = [settings.LOCAL_TIMEZONE.localize(datetime.fromtimestamp(xtick)) for xtick in xticks_e]
+            xticks_e = [xtick.timestamp() for xtick in xticks_dt]
+
+            return xticks_e, xticks_dt
+
+        return [], []
+
+    @staticmethod
+    def _calculate_xticklabels(xticks_dt):
+        labels = [xtick.strftime('%H:%M') for xtick in xticks_dt]
+        for idx, xtick in enumerate(xticks_dt):
+            if idx == 0 or xticks_dt[idx-1].date() != xtick.date():
+                labels[idx] = [xtick.strftime('%Y-%m-%d'), xtick.strftime('%H:%M')]
+
+        return labels
 
 
 class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
