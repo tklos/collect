@@ -113,16 +113,18 @@ class DevicePlotDataView(View):
         # Process measurements
         time_, data = [], [[] for _ in range(len(device.columns))]
         for measurement in measurements:
-            time_.append(measurement.date_added)
+            time_.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
             for idx, value in enumerate(measurement.data):
                 data[idx].append(value)
 
         # Set ascending order
-        time_ = reversed(time_)
-        data = [list(reversed(d)) for d in data]
+        time_.reverse()
+        for d in data:
+            d.reverse()
 
         data = {
-            'time': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_],
+            'time': [t.timestamp() for t in time_],
+            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_],
             'data': data,
             'labels': device.columns,
         }

@@ -9,10 +9,11 @@ $(document).ready(function() {
 		data: {
 			labels: [],
 			datasets: [],
+			time_fmt: [],
 		},
 		options: {
 			tooltips: {
-				mode: 'index',
+				mode: "index",
 				intersect: false,
 				bodyFontColor: "#000000",
 				bodyFontSize: 14,
@@ -22,9 +23,14 @@ $(document).ready(function() {
 				borderColor: "rgba(0, 0, 0, 0.7)",
 				borderWidth: 1,
 				bodySpacing: 4,
+				callbacks: {
+					title: function(tooltip_item, data) {
+						return data.time_fmt[tooltip_item[0].index];
+					},
+				},
 			},
 			hover: {
-				mode: 'nearest',
+				mode: "nearest",
 				intersect: true,
 			},
 		},
@@ -43,8 +49,9 @@ $(document).ready(function() {
 
 			success: function(data) {
 				config.data.labels = data.time;
+				config.data.time_fmt = data.time_fmt;
 
-				for (idx = 0; idx < data.labels.length; idx++) {
+				for (var idx = 0; idx < data.labels.length; idx++) {
 					var dataset = {};
 					dataset.label = data.labels[idx];
 					dataset.data = data.data[idx];
@@ -52,6 +59,7 @@ $(document).ready(function() {
 					dataset.borderColor = COLOURS[idx];
 					dataset.backgroundColor = COLOURS[idx];
 					dataset.fill = false;
+					// dataset.lineTension = 0;
 
 					config.data.datasets.push(dataset);
 				}
