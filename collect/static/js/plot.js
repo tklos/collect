@@ -102,5 +102,33 @@ $(document).ready(function() {
 	get_plot_data();
 
 
+	/* Set/Reset plot ylimits */
+	$("body").on("submit", "#form-ylimits", function(event) {
+		event.preventDefault();
+
+		var form = $(this);
+		var min_val = parseFloat(form.find("#id_ylimits_min").val());
+		var max_val = parseFloat(form.find("#id_ylimits_max").val());
+
+		if (!isNaN(min_val))
+			config.options.scales.yAxes[0].ticks.min = min_val;
+		if (!isNaN(max_val))
+			config.options.scales.yAxes[0].ticks.max = max_val;
+
+		plot.update();
+	});
+
+	$("body").on("click", "button.btn-ylimits-reset", function(event) {
+		var form = $(this).closest("#form-ylimits");
+		form.find("#id_ylimits_min").val("");
+		form.find("#id_ylimits_max").val("");
+
+		delete config.options.scales.yAxes[0].ticks.min;
+		delete config.options.scales.yAxes[0].ticks.max;
+
+		plot.update();
+	});
+
+
 });
 

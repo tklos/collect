@@ -66,6 +66,10 @@ td.td-ul-no-margin-bottom ul {
 
 
 /* Other */
+.btn-ylimits-reset {
+	margin-left: 20px;
+}
+
 label {
 	margin-bottom: 0px;
 }
@@ -89,6 +93,10 @@ label {
 	width: 1px;
 }
 
+.width-input-ylimits {
+	width: 80px;
+}
+
 .no-margin-bottom {
 	margin-bottom: 0px;
 }
@@ -109,6 +117,14 @@ label {
 	padding-right: 15px;
 }
 
+.padding-l-st {
+	padding-left: 10px !important;
+}
+
+.padding-b-2 {
+	padding-bottom: 3px;
+}
+
 .horizontal-align-center {
 	text-align: center;
 }
@@ -119,5 +135,9 @@ label {
 
 .glyphicon-margin {
 	margin-top: 3px !important;
+}
+
+.input-font-size-14 {
+	font-size: 14px !important;
 }
 
