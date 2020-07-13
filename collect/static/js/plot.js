@@ -15,6 +15,7 @@ $(document).ready(function() {
 			xticklabels: [],
 		},
 		options: {
+			spanGaps: true,
 			tooltips: {
 				mode: "index",
 				intersect: false,
