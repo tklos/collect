@@ -60,15 +60,21 @@ $(document).ready(function() {
 	var plot = new Chart(ctx, config);
 
 
-	function get_plot_data() {
-		var get_plot_data_url = $("#get-plot-data-url").val();
+	function get_initial_plot_data() {
+		var url = $("#get-initial-plot-data-url").val();
 
 		$.ajax({
 			type: "GET",
-			url: get_plot_data_url,
+			url: url,
 			dataType: "json",
 
 			success: function(data) {
+				/* Fill date form */
+				var form = $("#form-date");
+				form.find("#id_date_from").val(data.date_from_s);
+				form.find("#id_date_to").val(data.date_to_s);
+
+				/* Set plot */
 				config.data.labels = data.time;
 				config.data.time_fmt = data.time_fmt;
 				config.data.xlimits = data.xlimits;
@@ -100,7 +106,41 @@ $(document).ready(function() {
 		});
 	}
 
-	get_plot_data();
+	get_initial_plot_data();
+
+
+	$("body").on("submit", "#form-date", function(event) {
+		event.preventDefault();
+
+		var form = $(this);
+
+		$.ajax({
+			type: form.attr("method"),
+			url: form.attr("action"),
+			data: form.serialize(),
+			dataType: "json",
+
+			success: function(data) {
+				config.data.time_fmt = data.time_fmt;
+				config.data.xlimits = data.xlimits;
+				config.data.xticks = data.xticks;
+				config.data.xticklabels = data.xticklabels;
+
+				for (var idx = 0; idx < config.data.datasets.length; idx++) {
+					dataset_data = [];
+					for (var time_idx = 0; time_idx < data.time.length; time_idx++)
+						dataset_data.push({x: data.time[time_idx], y: data.data[idx][time_idx]});
+
+					config.data.datasets[idx].data = dataset_data;
+				}
+
+				plot.update();
+			},
+
+			error: function(data) {
+			}
+		});
+	});
 
 
 	/* Set/Reset plot ylimits */

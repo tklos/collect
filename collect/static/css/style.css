@@ -66,6 +66,14 @@ td.td-ul-no-margin-bottom ul {
 
 
 /* Other */
+#form-date {
+	margin-top: 20px;
+}
+
+#form-ylimits {
+	margin-top: 15px;
+}
+
 .btn-ylimits-reset {
 	margin-left: 20px;
 }
@@ -93,6 +101,10 @@ label {
 	width: 1px;
 }
 
+.width-input-date {
+	width: 150px;
+}
+
 .width-input-ylimits {
 	width: 80px;
 }
@@ -111,6 +123,10 @@ label {
 
 .margin-bottom-200px {
 	margin-bottom: 200px;
+}
+
+.padding-r-5 {
+	padding-right: 5px;
 }
 
 .padding-r-15 {
