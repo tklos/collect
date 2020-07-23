@@ -5,6 +5,7 @@ from datetime import timedelta, timezone, datetime
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -140,7 +141,18 @@ class XticksAndLabelsMixin:
         return labels
 
 
-class DevicePlotInitialDataView(XticksAndLabelsMixin, View):
+class BasicPlotDataMixin:
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.is_ajax():
+            raise PermissionDenied('Ajax request expected')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+
+class DevicePlotInitialDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
     DEFAULT_NUM_DATA_PTS = 360
     MAX_TIME_RANGE = timedelta(hours=6)
     MAX_UNTIL_NOW_DIFF = timedelta(minutes=2)
@@ -151,14 +163,6 @@ class DevicePlotInitialDataView(XticksAndLabelsMixin, View):
         current_time = datetime.now(settings.LOCAL_TIMEZONE)
         self.current_time = current_time
         self.this_minute, self.following_minute = self._get_this_minute(current_time), self._get_following_minute(current_time)
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            raise RuntimeError('Ajax request expected')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_device(self):
-        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
 
     def get(self, request, *args, **kwargs):
         device = self.get_device()
@@ -234,17 +238,9 @@ class DevicePlotInitialDataView(XticksAndLabelsMixin, View):
         return following_minute
 
 
-class DevicePlotDataView(XticksAndLabelsMixin, FormView):
+class DevicePlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, FormView):
     form_class = DevicePlotDateForm
     success_url = 'invalid_ajax_doesnt_exist.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            raise RuntimeError('Ajax request expected')
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_device(self):
-        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
 
     def form_valid(self, form):
         super().form_valid(form)
@@ -298,16 +294,11 @@ class DevicePlotDataView(XticksAndLabelsMixin, FormView):
         return measurements
 
 
-class DeviceNewestPlotDataView(XticksAndLabelsMixin, View):
+class DeviceNewestPlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            raise RuntimeError('Ajax request expected')
         return super().dispatch(request, *args, **kwargs)
-
-    def get_device(self):
-        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
 
     def post(self, request, *args, **kwargs):
         ## Process POST parameters
