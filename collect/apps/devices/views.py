@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, CreateView, DetailView, FormView
 
 from .models import Device
@@ -196,6 +197,10 @@ class DevicePlotInitialDataView(XticksAndLabelsMixin, View):
             'xlimits': xlim_e,
             'xticks': xticks_e,
             'xticklabels': xticklabels,
+
+            'date_from_interval': None,
+            'is_until_now': is_until_now,
+            'last_record_time': time_e[-1] if time_e else None,
         }
         return JsonResponse(data)
 
@@ -272,6 +277,10 @@ class DevicePlotDataView(XticksAndLabelsMixin, FormView):
             'xlimits': xlim_e,
             'xticks': xticks_e,
             'xticklabels': xticklabels,
+
+            'date_from_interval': form.date_from_interval,
+            'is_until_now': form.date_to_is_now,
+            'last_record_time': time_e[-1] if time_e else None,
         }
         return JsonResponse(data)
 
@@ -284,6 +293,76 @@ class DevicePlotDataView(XticksAndLabelsMixin, FormView):
             .filter(date_added__lt=xlim_dt[1])
             .order_by('-date_added')
         )
+        measurements = list(reversed(measurements))
+
+        return measurements
+
+
+class DeviceNewestPlotDataView(XticksAndLabelsMixin, View):
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        if not request.is_ajax():
+            raise RuntimeError('Ajax request expected')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def post(self, request, *args, **kwargs):
+        ## Process POST parameters
+        current_time = datetime.now(settings.LOCAL_TIMEZONE)
+        xlim_dt = [datetime.fromtimestamp(float(t), settings.LOCAL_TIMEZONE) for t in request.POST.getlist('xlimits[]')]
+        xlim_dt[1] = current_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
+
+        date_from_interval = request.POST['date_from_interval']
+        if date_from_interval:
+            xlim_dt[0] = xlim_dt[1] - timedelta(hours=float(date_from_interval)) - timedelta(minutes=1)
+
+        last_record_time = request.POST['last_record_time']
+        if last_record_time:
+            date_after_dt = max(xlim_dt[0], datetime.fromtimestamp(float(last_record_time), settings.LOCAL_TIMEZONE))
+        else:
+            date_after_dt = xlim_dt[0]
+
+        # Get data
+        device = self.get_device()
+        measurements = self._get_measurements(device, date_after_dt)
+
+        # Process measurements
+        time_dt, data = [], [[] for _ in range(len(device.columns))]
+        for measurement in measurements:
+            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
+            for idx, value in enumerate(measurement.data):
+                data[idx].append(value)
+
+        # Convert to unix timestamp
+        time_e = [t.timestamp() for t in time_dt]
+
+        # Calculate xlimits, ticks and labels
+        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        # Return data
+        data = {
+            'time': time_e,
+            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dt],
+            'data': data,
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
+
+            'last_record_time': time_e[-1] if time_e else None,
+        }
+        return JsonResponse(data)
+
+    @classmethod
+    def _get_measurements(cls, device, date_after):
+        measurements = device.measurement_set
+        if date_after:
+            measurements = measurements.filter(date_added__gt=date_after)
+        measurements = measurements.order_by('-date_added')
         measurements = list(reversed(measurements))
 
         return measurements

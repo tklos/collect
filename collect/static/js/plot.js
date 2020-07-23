@@ -1,5 +1,8 @@
 
-var COLOURS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+const COLOURS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
+
+const PLOT_UPDATE_INTERVAL = 60000;
+
 
 
 $(document).ready(function() {
@@ -13,6 +16,10 @@ $(document).ready(function() {
 			xlimits: [],
 			xticks: [],
 			xticklabels: [],
+
+			date_from_interval: null,
+			last_record_time: null,
+			update_handle: null,
 		},
 		options: {
 			spanGaps: true,
@@ -98,6 +105,11 @@ $(document).ready(function() {
 					config.data.datasets.push(dataset);
 				}
 
+				/* Set updating plot every minute */
+				config.data.last_record_time = data.last_record_time;
+				if (data.is_until_now)
+					config.data.update_handle = setInterval(get_newest_plot_data, PLOT_UPDATE_INTERVAL);
+
 				plot.update();
 			},
 
@@ -111,6 +123,9 @@ $(document).ready(function() {
 
 	$("body").on("submit", "#form-date", function(event) {
 		event.preventDefault();
+
+		/* Stop updating plot */
+		clearInterval(config.data.update_handle);
 
 		var form = $(this);
 
@@ -134,6 +149,12 @@ $(document).ready(function() {
 					config.data.datasets[idx].data = dataset_data;
 				}
 
+				/* Set updating plot every minute */
+				config.data.date_from_interval = data.date_from_interval;
+				config.data.last_record_time = data.last_record_time;
+				if (data.is_until_now)
+					config.data.update_handle = setInterval(get_newest_plot_data, PLOT_UPDATE_INTERVAL);
+
 				plot.update();
 			},
 
@@ -141,6 +162,49 @@ $(document).ready(function() {
 			}
 		});
 	});
+
+
+	function get_newest_plot_data() {
+		var url = $("#get-newest-plot-data-url").val();
+		var request_data = {
+			date_from_interval: config.data.date_from_interval,
+			xlimits: config.data.xlimits,
+			last_record_time: config.data.last_record_time,
+		};
+
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: request_data,
+			dataType: "json",
+
+			success: function(data) {
+				/* Update data */
+				if (data.last_record_time !== null) {
+					config.data.last_record_time = data.last_record_time;
+
+					for (t of data.time_fmt)
+						config.data.time_fmt.push(t);
+
+					for (var idx = 0; idx < config.data.datasets.length; idx++) {
+						var dataset_data = config.data.datasets[idx].data;
+						for (var time_idx = 0; time_idx < data.time.length; time_idx++)
+							dataset_data.push({x: data.time[time_idx], y: data.data[idx][time_idx]});
+					}
+				}
+
+				/* Update x axis */
+				config.data.xlimits = data.xlimits;
+				config.data.xticks = data.xticks;
+				config.data.xticklabels = data.xticklabels;
+
+				plot.update();
+			},
+
+			error: function(data) {
+			},
+		});
+	}
 
 
 	/* Set/Reset plot ylimits */

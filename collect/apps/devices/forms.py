@@ -43,6 +43,7 @@ class DevicePlotDateForm(forms.Form):
 
         # Current time
         self.current_time = datetime.now(settings.LOCAL_TIMEZONE)
+        self.date_from_interval = None
         self.date_to_is_now = False
 
         # Set widget attributes
@@ -66,7 +67,7 @@ class DevicePlotDateForm(forms.Form):
         prefix, suffix = '-', 'hours'
         try:
             if s.startswith(prefix) and s.endswith(suffix):
-                offset_h = float(s[len(prefix):-len(suffix)])
+                self.date_from_interval = offset_h = float(s[len(prefix):-len(suffix)])
                 date_from = timedelta(hours=offset_h)
             else:
                 date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
