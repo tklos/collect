@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 
 from django import forms
@@ -64,11 +65,22 @@ class DevicePlotDateForm(forms.Form):
         """
         s = self.cleaned_data['date_from'].strip()
 
-        prefix, suffix = '-', 'hours'
+        prefix = '-'
         try:
-            if s.startswith(prefix) and s.endswith(suffix):
-                self.date_from_interval = offset_h = float(s[len(prefix):-len(suffix)])
+            if s.startswith(prefix):
+                if s.endswith('days'):
+                    offset_h = 24. * float(s[len(prefix):-len('days')])
+                elif s.endswith('hours'):
+                    offset_h = float(s[len(prefix):-len('hours')])
+                else:
+                    raise RuntimeError('Can\'t read interval')
+
+                # Make interval a multiple number of whole minutes
+                offset_h = math.ceil(offset_h * 60) / 60
+
+                self.date_from_interval = offset_h
                 date_from = timedelta(hours=offset_h)
+
             else:
                 date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
 
