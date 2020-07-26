@@ -157,6 +157,8 @@ class DevicePlotInitialDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
     MAX_TIME_RANGE = timedelta(hours=6)
     MAX_UNTIL_NOW_DIFF = timedelta(minutes=2)
 
+    http_method_names = ['get']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -165,6 +167,7 @@ class DevicePlotInitialDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
         self.this_minute, self.following_minute = self._get_this_minute(current_time), self._get_following_minute(current_time)
 
     def get(self, request, *args, **kwargs):
+        # Get measurements
         device = self.get_device()
         measurements, is_until_now = self._get_measurements(device)
 
@@ -240,13 +243,17 @@ class DevicePlotInitialDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
 
 class DevicePlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, FormView):
     form_class = DevicePlotDateForm
+    template_name = 'devices/device_plot_form_date.html'
     success_url = 'invalid_ajax_doesnt_exist.html'
+
+    http_method_names = ['post']
 
     def form_valid(self, form):
         super().form_valid(form)
 
         xlim_dt = (form.cleaned_data['date_from'], form.cleaned_data['date_to'])
 
+        # Get measurements
         device = self.get_device()
         measurements = self._get_measurements(device, xlim_dt)
 
@@ -263,6 +270,9 @@ class DevicePlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, FormView):
         # Calculate xlimits, ticks and labels
         xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
         xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        if not xticks_e:
+            form.add_error(None, f'Time interval too long; max allowed ~{self.MAX_NUM_XTICKS} days')
+            return self.form_invalid(form)
         xticklabels = self._calculate_xticklabels(xticks_dt)
 
         # Return data
@@ -280,6 +290,18 @@ class DevicePlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, FormView):
         }
         return JsonResponse(data)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['device'] = self.get_device()
+        return context
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        data = {
+            'form_html': response.rendered_content,
+        }
+        return JsonResponse(data, status=400)
+
     @classmethod
     def _get_measurements(cls, device, xlim_dt):
         measurements = (
@@ -295,22 +317,23 @@ class DevicePlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, FormView):
 
 
 class DeviceNewestPlotDataView(BasicPlotDataMixin, XticksAndLabelsMixin, View):
+    http_method_names = ['get']
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        ## Process POST parameters
+    def get(self, request, *args, **kwargs):
+        ## Process request parameters
         current_time = datetime.now(settings.LOCAL_TIMEZONE)
-        xlim_dt = [datetime.fromtimestamp(float(t), settings.LOCAL_TIMEZONE) for t in request.POST.getlist('xlimits[]')]
+        xlim_dt = [datetime.fromtimestamp(float(t), settings.LOCAL_TIMEZONE) for t in request.GET.getlist('xlimits[]')]
         xlim_dt[1] = current_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
 
-        date_from_interval = request.POST['date_from_interval']
+        date_from_interval = request.GET['date_from_interval']
         if date_from_interval:
             xlim_dt[0] = xlim_dt[1] - timedelta(hours=float(date_from_interval)) - timedelta(minutes=1)
 
-        last_record_time = request.POST['last_record_time']
+        last_record_time = request.GET['last_record_time']
         if last_record_time:
             date_after_dt = max(xlim_dt[0], datetime.fromtimestamp(float(last_record_time), settings.LOCAL_TIMEZONE))
         else:

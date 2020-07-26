@@ -114,7 +114,7 @@ $(document).ready(function() {
 			},
 
 			error: function(data) {
-			}
+			},
 		});
 	}
 
@@ -124,9 +124,6 @@ $(document).ready(function() {
 	$("body").on("submit", "#form-date", function(event) {
 		event.preventDefault();
 
-		/* Stop updating plot */
-		clearInterval(config.data.update_handle);
-
 		var form = $(this);
 
 		$.ajax({
@@ -134,6 +131,14 @@ $(document).ready(function() {
 			url: form.attr("action"),
 			data: form.serialize(),
 			dataType: "json",
+
+			beforeSend: function() {
+				/* Clear previous errors */
+				$("#form-date-errors").remove();
+
+				/* Stop updating plot */
+				clearInterval(config.data.update_handle);
+			},
 
 			success: function(data) {
 				config.data.time_fmt = data.time_fmt;
@@ -159,7 +164,8 @@ $(document).ready(function() {
 			},
 
 			error: function(data) {
-			}
+				$("#form-date").html(data.responseJSON.form_html);
+			},
 		});
 	});
 
@@ -173,7 +179,7 @@ $(document).ready(function() {
 		};
 
 		$.ajax({
-			type: "POST",
+			type: "GET",
 			url: url,
 			data: request_data,
 			dataType: "json",
@@ -211,9 +217,28 @@ $(document).ready(function() {
 	$("body").on("submit", "#form-ylimits", function(event) {
 		event.preventDefault();
 
+		const error_id = "form-ylimits-errors";
+
 		var form = $(this);
+		form.find("#"+error_id).remove();
 		var min_val = parseFloat(form.find("#id_ylimits_min").val());
 		var max_val = parseFloat(form.find("#id_ylimits_max").val());
+
+		if (max_val <= min_val) {
+			var error_text = "max-value has to be larger than min-value";
+			var error_el = '\
+				<tr id="' + error_id + '">\
+					<td colspan="4">\
+						<ul class="errorlist no-margin-bottom">\
+							<li><span class="error text-danger">' + error_text + '</span></li>\
+						</ul>\
+					</td>\
+				</tr>';
+
+			form.children("table").append(error_el);
+
+			return;
+		}
 
 		if (!isNaN(min_val))
 			config.options.scales.yAxes[0].ticks.min = min_val;
@@ -224,7 +249,10 @@ $(document).ready(function() {
 	});
 
 	$("body").on("click", "button.btn-ylimits-reset", function(event) {
+		const error_id = "form-ylimits-errors";
+
 		var form = $(this).closest("#form-ylimits");
+		form.find("#"+error_id).remove();
 		form.find("#id_ylimits_min").val("");
 		form.find("#id_ylimits_max").val("");
 

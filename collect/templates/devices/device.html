@@ -30,62 +30,7 @@
 		{% include "devices/device_measurements.html" with object=object measurements_page=measurements_page measurements_extra=measurements_extra only %}
 	</div>
 	<div class="div-plot">
-		<canvas id="measurements_plot"></canvas>
-
-
-		<form method="post" id="form-date" action="{% url 'devices:get-plot-data' d_sid=object.sequence_id %}">
-			{% csrf_token %}
-
-			<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle no-margin-bottom">
-				<tr>
-					<td><label>Date:</label></td>
-					<td>
-						<table>
-							<tr>
-								<td class="padding-b-2 padding-r-5"><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or offset from date-to ("-(x)hours")'><span class="glyphicon glyphicon-info-sign glyphicon-margin" aria-hidden="true"></span></div></td>
-								<td class="padding-b-2"><label>From:</label></td>
-								<td class="padding-l-st padding-b-2">{{plot_date_form.date_from}}</td>
-							</tr>
-							<tr>
-								<td class="padding-b-2 padding-r-5"><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or "now"'><span class="glyphicon glyphicon-info-sign glyphicon-margin" aria-hidden="true"></span></div></td>
-								<td><label>To:</label></td>
-								<td class="padding-l-st">{{plot_date_form.date_to}}</td>
-							</tr>
-						</table>
-					</td>
-					<td>
-						<input type="submit" value="Set" class="btn btn-primary"/>
-					</td>
-				</tr>
-			</table>
-		</form>
-
-
-		<form id="form-ylimits">
-			<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle no-margin-bottom">
-				<tr>
-					<td><label>YLimits:</label></td>
-					<td>
-						<table>
-							<tr>
-								<td class="padding-b-2"><label>Min:</label></td>
-								<td class="padding-l-st padding-b-2"><input type="text" class="form-control input-sm input-font-size-14 width-input-ylimits" autocomplete="off" maxlength="10" id="id_ylimits_min"></td>
-							</tr>
-							<tr>
-								<td><label>Max:</label></td>
-								<td class="padding-l-st"><input type="text" class="form-control input-sm input-font-size-14 width-input-ylimits" autocomplete="off" maxlength="10" id="id_ylimits_max"></td>
-							</tr>
-						</table>
-					</td>
-					<td>
-						<input type="submit" value="Set" class="btn btn-primary"/>
-					</td>
-					<td>
-						<button type="button" class="btn-ylimits-reset btn btn-warning">Reset</button>
-					</td>
-				</tr>
-			</table>
-		</form>
+		{% include "devices/device_plot.html" with device=object plot_date_form=plot_date_form csrf_token=csrf_token only %}
 	</div>
 
 

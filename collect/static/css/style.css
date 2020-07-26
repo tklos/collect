@@ -109,6 +109,10 @@ label {
 	width: 80px;
 }
 
+.width-long {
+	width: 250px;
+}
+
 .no-margin-bottom {
 	margin-bottom: 0px;
 }
