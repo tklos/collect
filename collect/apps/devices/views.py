@@ -53,7 +53,7 @@ class DeviceAddView(CreateView):
 
         ret = super().form_valid(form)
 
-        msg = f'Device {name} added.<br/>API key: <b>{api_key}</b><br/>Please save it as it is shown only once'
+        msg = f'Device {name} added.<br/>API key: <b><span class="monospace">{api_key}</span></b><br/>Please save it as it is shown only once'
         messages.success(self.request, mark_safe(msg))
 
         return ret

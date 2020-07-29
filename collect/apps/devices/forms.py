@@ -32,6 +32,9 @@ class DeviceAddForm(forms.ModelForm):
     def clean_columns(self):
         columns_s = self.cleaned_data['columns']
         columns = [s.strip() for s in columns_s.split(',')]
+        if not all(columns):
+            raise ValidationError('Column name can\'t be empty')
+
         return columns
 
 
