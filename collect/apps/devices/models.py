@@ -24,7 +24,6 @@ class Device(models.Model):
         ]
         unique_together = (
             ('user', 'sequence_id'),
-            ('user', 'name'),
         )
         ordering = [
             'sequence_id',

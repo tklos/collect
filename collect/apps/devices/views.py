@@ -33,20 +33,14 @@ class DeviceAddView(CreateView):
         name = form.cleaned_data['name']
         columns = form.cleaned_data['columns']
 
-        # Check if name is correct
-        if Device.objects.filter(user=user, name=name).first() is not None:
-            form.add_error('name', 'Device with this name already exists')
-            return self.form_invalid(form)
-
-        form.instance.user = user
-        form.instance.columns = columns
-
         # Create API key
         api_key = ''.join(random.sample(self.API_KEY_CHARS, k=const.DEVICE_API_KEY_LEN))
         token = api_key[:const.DEVICE_TOKEN_LEN]
         salt = ''.join(random.sample(self.API_KEY_CHARS, k=const.DEVICE_SALT_LEN))
         api_key_hash = calculate_hash(api_key, salt)
 
+        form.instance.user = user
+        form.instance.columns = columns
         form.instance.token = token
         form.instance.salt = salt
         form.instance.api_key_hash = api_key_hash
