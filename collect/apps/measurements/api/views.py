@@ -9,7 +9,7 @@ from .serializers import MeasurementSerializer
 class MeasurementView(APIView):
     """
     Sample request:
-    curl -X POST https://(server)/api/measurements/ -H 'API-KEY: (api-key))' -H "Content-Type: application/json" -d '{"data": [3233.0]}'
+    curl -X POST https://(server)/api/measurements/ -H 'API-KEY: (api-key)' -H "Content-Type: application/json" -d '{"data": [3233.0]}'
     requests.post('https://(server)/api/measurements/', headers={'API-KEY': '(api-key)'}, json={'data': [223.]})
     """
     authentication_classes = (

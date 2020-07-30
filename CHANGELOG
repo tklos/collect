@@ -1,7 +1,10 @@
 
- ** v0.1.0
-    Features:
-     - User accounts
-     - Device registration
-     - Measurements API endpoint
+ ** v1.0.0   30.07.2020
+    - Add measurements plot
+
+
+ ** v0.1.0   26.01.2020
+    - Add user accounts
+    - Add device registration
+    - Add measurements API endpoint
 

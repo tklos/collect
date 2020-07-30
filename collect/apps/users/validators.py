@@ -14,7 +14,7 @@ class UsernameValidator:
             raise ValidationError('Username too short; at least {} characters required'.format(UsernameValidator._min_length))
         for c in username:
             if c not in allowed_chars:
-                raise ValidationError('Incorrect username; \'{}\' character not allowed'.format(c))
+                raise ValidationError(f'Incorrect username; \'{c}\' character not allowed')
 
     def get_help_text(self):
         return '<ul><li>Username must contain at least {} characters;<br/>lowercase-letters, uppercase-letters, digits and \'{}\' are allowed</li></ul>'.format(

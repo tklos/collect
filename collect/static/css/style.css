@@ -66,6 +66,22 @@ td.td-ul-no-margin-bottom ul {
 
 
 /* Other */
+#form-date {
+	margin-top: 20px;
+}
+
+#form-ylimits {
+	margin-top: 15px;
+}
+
+.btn-ylimits-reset {
+	margin-left: 20px;
+}
+
+label {
+	margin-bottom: 0px;
+}
+
 .btn-padding-tb-sm {
 	padding-top: 4px;
 	padding-bottom: 4px;
@@ -85,6 +101,18 @@ td.td-ul-no-margin-bottom ul {
 	width: 1px;
 }
 
+.width-input-date {
+	width: 150px;
+}
+
+.width-input-ylimits {
+	width: 80px;
+}
+
+.width-long {
+	width: 250px;
+}
+
 .no-margin-bottom {
 	margin-bottom: 0px;
 }
@@ -101,8 +129,20 @@ td.td-ul-no-margin-bottom ul {
 	margin-bottom: 200px;
 }
 
+.padding-r-5 {
+	padding-right: 5px;
+}
+
 .padding-r-15 {
 	padding-right: 15px;
+}
+
+.padding-l-st {
+	padding-left: 10px !important;
+}
+
+.padding-b-2 {
+	padding-bottom: 3px;
 }
 
 .horizontal-align-center {
@@ -111,5 +151,13 @@ td.td-ul-no-margin-bottom ul {
 
 .horizontal-align-right {
 	text-align: right;
+}
+
+.glyphicon-margin {
+	margin-top: 3px !important;
+}
+
+.input-font-size-14 {
+	font-size: 14px !important;
 }
 

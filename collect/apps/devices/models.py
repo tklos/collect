@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Max
 from django.db.models.functions import Coalesce
@@ -11,8 +12,7 @@ class Device(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='device_set')
     sequence_id = models.IntegerField()
     name = models.CharField(max_length=30)
-    num_columns = models.IntegerField()
-    columns = models.CharField(max_length=200, null=True, blank=True)
+    columns = JSONField()
     token = models.CharField(max_length=const.DEVICE_TOKEN_LEN)
     salt = models.CharField(max_length=const.DEVICE_SALT_LEN)
     api_key_hash = models.CharField(max_length=64)
@@ -24,7 +24,6 @@ class Device(models.Model):
         ]
         unique_together = (
             ('user', 'sequence_id'),
-            ('user', 'name'),
         )
         ordering = [
             'sequence_id',
@@ -38,9 +37,13 @@ class Device(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk is None:
-            last_seq_id = Device.objects \
-                .filter(user=self.user) \
-                .aggregate(ret=Coalesce(Max('sequence_id'), 0))['ret']
+            last_seq_id = (
+                Device
+                .objects
+                .filter(user=self.user)
+                .aggregate(ret=Coalesce(Max('sequence_id'), 0))
+                ['ret']
+            )
 
             self.sequence_id = last_seq_id + 1
 

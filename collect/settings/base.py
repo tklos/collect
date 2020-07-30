@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import pytz
 import sys
 
 
@@ -54,6 +55,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'lib.middleware.timezone.TimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'collect.urls'
@@ -113,7 +116,7 @@ LOGIN_REDIRECT_URL = 'profile:home'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Europe/Warsaw'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -137,6 +140,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+
+# Timezone
+LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
 # Pagination

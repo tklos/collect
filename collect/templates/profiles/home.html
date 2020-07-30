@@ -10,13 +10,13 @@
 
 <h1>Devices</h1>
 	<table class="table table-bordered table-condensed no-margin-bottom table-td-vertical-align-middle">
-		<tr><th>ID</th><th>Name</th><th>API key</th><th>Num columns</th><th class="width-1px">Action</th></tr>
+		<tr><th>ID</th><th>Name</th><th>API key</th><th>Columns</th><th class="width-1px">Action</th></tr>
 		{% for d in user.device_set.all %}
 			<tr>
 				<td>{{d.sequence_id}}</td>
 				<td>{{d.name}}</td>
 				<td class="monospace">{{d.get_api_key_display}}</td>
-				<td>{{d.num_columns}}</td>
+				<td>{{d.columns|join:", "}}</td>
 				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'devices:device' d_sid=d.sequence_id %}">View</a></td>
 			</tr>
 		{% endfor %}
