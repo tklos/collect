@@ -1,0 +1,30 @@
+
+<form method="post" id="form-download" action="{% url 'devices:download' d_sid=device.sequence_id %}">
+	{% csrf_token %}
+
+	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle no-margin-bottom">
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td class="padding-b-2"><label>From:</label></td>
+						<td class="padding-l-st padding-b-2">{{form.date_from}}</td>
+					</tr>
+					<tr>
+						<td><label>To:</label></td>
+						<td class="padding-l-st">{{form.date_to}}</td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<input type="submit" value="Submit" class="btn btn-primary"/>
+			</td>
+			<td class="width-long">
+			</td>
+		</tr>
+		{% if form.errors %}
+			{% include "common/form_errors.html" with form=form trid="form-download-errors" colspan=3 only %}
+		{% endif %}
+	</table>
+</form>
+

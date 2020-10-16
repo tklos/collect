@@ -105,6 +105,10 @@ label {
 	width: 150px;
 }
 
+.width-input-date-long {
+	width: 180px;
+}
+
 .width-input-ylimits {
 	width: 80px;
 }
