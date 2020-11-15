@@ -60,12 +60,33 @@ td.td-ul-no-margin-bottom ul {
   padding-bottom: 3px;
 }
 
+.table-delete-confirm {
+	margin-top: 5px;
+}
+
+.table-delete-confirm > tbody > tr > td {
+	padding-left: 0px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+
 .table-inactive {
 	background-color: #ececec;
 }
 
 
+/* Buttons */
+.btn-show-hide-data-delete-panel {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+
 /* Other */
+.display-none {
+	display: none;
+}
+
 #form-date {
 	margin-top: 20px;
 }

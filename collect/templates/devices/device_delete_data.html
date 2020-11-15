@@ -1,0 +1,62 @@
+
+<form method="post" id="form-delete-data" action="{% url 'devices:delete-data' d_sid=device.sequence_id %}">
+	{% csrf_token %}
+
+	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle no-margin-bottom">
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td class="padding-b-2"><label>From:</label></td>
+						<td class="padding-l-st padding-b-2">{{form.date_from}}</td>
+					</tr>
+					<tr>
+						<td><label>To:</label></td>
+						<td class="padding-l-st">{{form.date_to}}</td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<button type="button" class="btn btn-danger btn-delete-data" data-toggle="modal" data-target="#delete-data-modal">
+					Submit
+				</button>
+
+				<div id="delete-data-modal" class="modal fade" role="dialog" tabindex="-1">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal">&times;</button>
+								<h4 class="modal-title">Delete data</h4>
+							</div>
+							<div class="modal-body">
+								Are you sure you want to delete data? It will not be possible to recover whatever is deleted.
+								<table class="table table-condensed table-no-border table-delete-confirm width-auto no-margin-bottom">
+									<tr>
+										<td><b>From: </b></td>
+										<td><span class="delete-confirm-from">(unknown)</span></td>
+									</tr>
+									<tr>
+										<td><b>To: </b></td>
+										<td><span class="delete-confirm-to">(unknown)</span></td>
+									</tr>
+								</table>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal">
+									Cancel
+								</button>
+								<input type="submit" value="Delete" class="btn btn-danger"/>
+							</div>
+						</div>
+					</div>
+				</div>
+			</td>
+			<td class="width-long">
+			</td>
+		</tr>
+		{% if form.errors %}
+			{% include "common/form_errors.html" with form=form trid="form-delete-errors" colspan=3 only %}
+		{% endif %}
+	</table>
+</form>
+

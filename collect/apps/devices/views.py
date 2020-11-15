@@ -17,7 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, CreateView, DetailView, FormView
 
 from .models import Device
-from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm
+from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm, DeviceDeleteDataForm
 from .functions import calculate_hash
 from . import const
 
@@ -65,6 +65,16 @@ class DeviceAddView(CreateView):
         return super().form_invalid(form)
 
 
+class DeviceMixin:
+
+    def get_device_context(self, device):
+        return {
+            'download_form': DeviceDownloadForm(),
+            'delete_data_form': DeviceDeleteDataForm(),
+            'plot_date_form': DevicePlotDateForm(),
+        }
+
+
 class DeviceMeasurementsMixin:
 
     def get_measurements_context(self, device, page):
@@ -81,7 +91,7 @@ class DeviceMeasurementsMixin:
         }
 
 
-class DeviceView(DeviceMeasurementsMixin, DetailView):
+class DeviceView(DeviceMixin, DeviceMeasurementsMixin, DetailView):
     template_name = 'devices/device.html'
 
     def get_object(self, queryset=None):
@@ -89,11 +99,9 @@ class DeviceView(DeviceMeasurementsMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        d_context = self.get_device_context(self.object)
         m_context = self.get_measurements_context(self.object, 1)
-        context.update(m_context)
-
-        context['download_form'] = DeviceDownloadForm()
-        context['plot_date_form'] = DevicePlotDateForm()
+        context.update(**d_context, **m_context)
 
         return context
 
@@ -143,6 +151,53 @@ class DeviceDownloadDataView(FormView):
             'html': response.rendered_content,
         }
         return JsonResponse(data, status=400)
+
+
+class DeviceDeleteDataView(DeviceMixin, DeviceMeasurementsMixin, FormView):
+    form_class = DeviceDeleteDataForm
+    template_name = 'devices/device.html'
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_success_url(self):
+        return reverse('devices:device', kwargs=self.kwargs)
+
+    def form_valid(self, form):
+        device = self.get_device()
+
+        # Get data
+        data = device.measurement_set
+
+        date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
+        if date_from is not None:
+            data = data.filter(date_added__gte=date_from)
+        if date_to is not None:
+            data = data.filter(date_added__lt=date_to)
+
+        if not date_from and not date_to:
+            form.add_error(None, 'You must set at least one of date-from, date-to')
+            return self.form_invalid(form)
+
+        # Delete data
+        num_deleted, _ = data.all().delete()
+
+        messages.success(self.request, f'{num_deleted} records deleted')
+
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        device = self.get_device()
+
+        context = super().get_context_data(**kwargs)
+        context['device'] = context['object'] = device
+        d_context = self.get_device_context(device)
+        m_context = self.get_measurements_context(device, 1)
+        context.update(**d_context, **m_context)
+
+        context['delete_data_form'] = context.pop('form')
+
+        return context
 
 
 class XticksAndLabelsMixin:

@@ -46,6 +46,40 @@ $(document).ready(function() {
 	});
 
 
+	/* Delete device data */
+	$("body").on("click", "button.btn-show-hide-data-delete-panel", function(event) {
+		var target = $(event.target);
+		var div = $("body").find(".div-delete");
+
+		if (div.hasClass("display-none")) {
+			target.html("Hide delete panel");
+			div.removeClass("display-none");
+		} else {
+			target.html("Show delete panel");
+			div.addClass("display-none");
+		}
+	});
+
+	// $("#delete-data-modal").on("shown.bs.modal", function (e) {
+	$("body").on("click", ".btn-delete-data", function (event) {
+		var from_s = $("#id_delete_date_from").val();
+		var to_s = $("#id_delete_date_to").val();
+
+		if (from_s === "")
+			from_s = "(none)";
+		if (to_s === "")
+			to_s = "(none)";
+
+		$(".delete-confirm-from").html(from_s);
+		$(".delete-confirm-to").html(to_s);
+	});
+
+	if ($("#form-delete-errors").length) {
+		$("button.btn-show-hide-data-delete-panel").html("Hide delete panel");
+		$(".div-delete").removeClass("display-none");
+	}
+
+
 	/* Pagination */
 	$("body").on("click", "a.a-paginator", function(event) {
 		event.preventDefault();
