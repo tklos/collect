@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
@@ -217,6 +218,25 @@ class DeviceDeleteAllDataView(View):
         messages.success(self.request, f'{num_deleted} records deleted')
 
         return redirect(self.get_success_url())
+
+
+class DeviceDeleteDeviceView(View):
+    success_url = reverse_lazy('profile:home')
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            device = self.get_device()
+
+            # Delete
+            num_deleted, _ = device.measurement_set.all().delete()
+            device.delete()
+
+        messages.success(self.request, f'Device {device.name} and its {num_deleted} records deleted')
+
+        return redirect(self.success_url)
 
 
 class XticksAndLabelsMixin:

@@ -39,6 +39,7 @@
 	<div class="div-delete display-none">
 		{% include "devices/device_delete_data.html" with device=object form=delete_data_form csrf_token=csrf_token only %}
 		{% include "devices/device_delete_data_all.html" with device=object csrf_token=csrf_token only %}
+		{% include "devices/device_delete_device.html" with device=object csrf_token=csrf_token only %}
 	</div>
 
 
