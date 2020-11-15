@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
 from django.views import View
@@ -198,6 +198,25 @@ class DeviceDeleteDataView(DeviceMixin, DeviceMeasurementsMixin, FormView):
         context['delete_data_form'] = context.pop('form')
 
         return context
+
+
+class DeviceDeleteAllDataView(View):
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_success_url(self):
+        return reverse('devices:device', kwargs=self.kwargs)
+
+    def post(self, request, *args, **kwargs):
+        device = self.get_device()
+
+        # Delete data
+        num_deleted, _ = device.measurement_set.all().delete()
+
+        messages.success(self.request, f'{num_deleted} records deleted')
+
+        return redirect(self.get_success_url())
 
 
 class XticksAndLabelsMixin:

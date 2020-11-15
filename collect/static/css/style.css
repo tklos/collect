@@ -81,6 +81,11 @@ td.td-ul-no-margin-bottom ul {
 	padding-right: 0px;
 }
 
+.btn-delete-all-data {
+	margin-left: 20px;
+	margin-top: 20px;
+}
+
 
 /* Other */
 .display-none {
