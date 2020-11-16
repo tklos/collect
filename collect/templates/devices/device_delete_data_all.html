@@ -1,0 +1,29 @@
+
+<form method="post" id="form-delete-data" action="{% url 'devices:delete-all-data' d_sid=device.sequence_id %}">
+	{% csrf_token %}
+
+	<button type="button" class="btn btn-danger btn-delete-all-data" data-toggle="modal" data-target="#delete-all-data-modal">
+		Delete all data
+	</button>
+
+	<div id="delete-all-data-modal" class="modal fade" role="dialog" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Delete all data</h4>
+				</div>
+				<div class="modal-body">
+					Are you sure you want to delete all data? It will not be possible to recover whatever is deleted.
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">
+						Cancel
+					</button>
+					<input type="submit" value="Delete all data" class="btn btn-danger"/>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+
