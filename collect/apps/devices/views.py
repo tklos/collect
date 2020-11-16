@@ -8,8 +8,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
 from django.views import View
@@ -17,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, CreateView, DetailView, FormView
 
 from .models import Device
-from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm
+from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm, DeviceDeleteDataForm
 from .functions import calculate_hash
 from . import const
 
@@ -65,6 +66,16 @@ class DeviceAddView(CreateView):
         return super().form_invalid(form)
 
 
+class DeviceMixin:
+
+    def get_device_context(self, device):
+        return {
+            'download_form': DeviceDownloadForm(),
+            'delete_data_form': DeviceDeleteDataForm(),
+            'plot_date_form': DevicePlotDateForm(),
+        }
+
+
 class DeviceMeasurementsMixin:
 
     def get_measurements_context(self, device, page):
@@ -81,7 +92,7 @@ class DeviceMeasurementsMixin:
         }
 
 
-class DeviceView(DeviceMeasurementsMixin, DetailView):
+class DeviceView(DeviceMixin, DeviceMeasurementsMixin, DetailView):
     template_name = 'devices/device.html'
 
     def get_object(self, queryset=None):
@@ -89,11 +100,9 @@ class DeviceView(DeviceMeasurementsMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        d_context = self.get_device_context(self.object)
         m_context = self.get_measurements_context(self.object, 1)
-        context.update(m_context)
-
-        context['download_form'] = DeviceDownloadForm()
-        context['plot_date_form'] = DevicePlotDateForm()
+        context.update(**d_context, **m_context)
 
         return context
 
@@ -143,6 +152,111 @@ class DeviceDownloadDataView(FormView):
             'html': response.rendered_content,
         }
         return JsonResponse(data, status=400)
+
+
+class DeviceDeleteDataView(DeviceMixin, DeviceMeasurementsMixin, FormView):
+    form_class = DeviceDeleteDataForm
+    template_name = 'devices/device.html'
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_success_url(self):
+        return reverse('devices:device', kwargs=self.kwargs)
+
+    def form_valid(self, form):
+        device = self.get_device()
+
+        # Get data
+        data = device.measurement_set
+
+        date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
+        if date_from is not None:
+            data = data.filter(date_added__gte=date_from)
+        if date_to is not None:
+            data = data.filter(date_added__lt=date_to)
+
+        if not date_from and not date_to:
+            form.add_error(None, 'You must set at least one of date-from, date-to')
+            return self.form_invalid(form)
+
+        # Delete data
+        num_deleted, _ = data.all().delete()
+
+        messages.success(self.request, f'{num_deleted} records deleted')
+
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        device = self.get_device()
+
+        context = super().get_context_data(**kwargs)
+        context['device'] = device
+        d_context = self.get_device_context(device)
+        m_context = self.get_measurements_context(device, 1)
+        context.update(**d_context, **m_context)
+
+        context['delete_data_form'] = context.pop('form')
+
+        return context
+
+
+class DeviceDeleteAllDataView(View):
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_success_url(self):
+        return reverse('devices:device', kwargs=self.kwargs)
+
+    def post(self, request, *args, **kwargs):
+        device = self.get_device()
+
+        # Delete data
+        num_deleted, _ = device.measurement_set.all().delete()
+
+        messages.success(self.request, f'{num_deleted} records deleted')
+
+        return redirect(self.get_success_url())
+
+
+class DeviceDeleteDeviceView(View):
+    success_url = reverse_lazy('profile:home')
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            device = self.get_device()
+
+            # Delete
+            num_deleted, _ = device.measurement_set.all().delete()
+            device.delete()
+
+        messages.success(self.request, f'Device {device.name} and its {num_deleted} records deleted')
+
+        return redirect(self.success_url)
+
+
+class DeviceDeleteMeasurementView(View):
+    success_url = reverse_lazy('profile:home')
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_measurement(self, device, m_id):
+        return get_object_or_404(device.measurement_set, id=m_id)
+
+    def get(self, request, *args, **kwargs):
+        with transaction.atomic():
+            device = self.get_device()
+            measurement = self.get_measurement(device, self.kwargs['m_id'])
+
+            # Delete
+            measurement.delete()
+
+        return JsonResponse({'status': 'ok'})
 
 
 class XticksAndLabelsMixin:
@@ -434,11 +548,10 @@ class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, d_sid, page, **kwargs):
-        context = super().get_context_data(**kwargs)
-
         device = Device.objects.get(user=self.request.user, sequence_id=d_sid)
-        context['object'] = device
 
+        context = super().get_context_data(**kwargs)
+        context['device'] = device
         m_context = self.get_measurements_context(device, page)
         context.update(m_context)
 

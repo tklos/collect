@@ -38,11 +38,11 @@ class DeviceAddForm(forms.ModelForm):
         return columns
 
 
-class DeviceDownloadForm(forms.Form):
+class DeviceDatesForm(forms.Form):
     date_from = forms.CharField(max_length=19, required=False)
     date_to = forms.CharField(max_length=19, required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, id_prefix, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Set widget attributes
@@ -52,9 +52,11 @@ class DeviceDownloadForm(forms.Form):
         }
 
         self.fields['date_from'].widget.attrs.update(text_field_attrs)
+        self.fields['date_from'].widget.attrs['id'] = f'id_{id_prefix}_date_from'
         self.fields['date_from'].widget.attrs['placeholder'] = 'yyyy-mm-dd HH:MM:SS'
 
         self.fields['date_to'].widget.attrs.update(text_field_attrs)
+        self.fields['date_to'].widget.attrs['id'] = f'id_{id_prefix}_date_to'
         self.fields['date_to'].widget.attrs['placeholder'] = 'yyyy-mm-dd HH:MM:SS'
 
     @staticmethod
@@ -80,6 +82,18 @@ class DeviceDownloadForm(forms.Form):
         if date_from is not None and date_to is not None:
             if date_to <= date_from:
                 self.add_error(None, 'date-to should be later than date-from')
+
+
+class DeviceDownloadForm(DeviceDatesForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__('download', *args, **kwargs)
+
+
+class DeviceDeleteDataForm(DeviceDatesForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__('delete', *args, **kwargs)
 
 
 class DevicePlotDateForm(forms.Form):
