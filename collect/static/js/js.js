@@ -80,6 +80,43 @@ $(document).ready(function() {
 	}
 
 
+	/* Data panel */
+	$("body").on("click", "button.btn-show-hide-data-panel", function(event) {
+		var target = $(event.target);
+		var div = $("body").find(".div-data");
+
+		if (div.hasClass("display-none")) {
+			target.html("Hide data panel");
+			div.removeClass("display-none");
+		} else {
+			target.html("Show data panel");
+			div.addClass("display-none");
+		}
+	});
+
+	$("body").on("click", ".measurement-delete-link", function (event) {
+		event.preventDefault();
+
+		var obj = $(this);
+		var tr = obj.closest("tr");
+
+		$.ajax({
+			type: "GET",
+			url: obj.data("url"),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+
+			success: function(data) {
+				tr.addClass("strikeout");
+			},
+
+			error: function(data) {
+				alert("Request failed (error " + data.status + ": " + data.statusText + "); please reload page");
+			}
+		});
+	});
+
+
 	/* Pagination */
 	$("body").on("click", "a.a-paginator", function(event) {
 		event.preventDefault();

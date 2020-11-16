@@ -191,7 +191,7 @@ class DeviceDeleteDataView(DeviceMixin, DeviceMeasurementsMixin, FormView):
         device = self.get_device()
 
         context = super().get_context_data(**kwargs)
-        context['device'] = context['object'] = device
+        context['device'] = device
         d_context = self.get_device_context(device)
         m_context = self.get_measurements_context(device, 1)
         context.update(**d_context, **m_context)
@@ -237,6 +237,26 @@ class DeviceDeleteDeviceView(View):
         messages.success(self.request, f'Device {device.name} and its {num_deleted} records deleted')
 
         return redirect(self.success_url)
+
+
+class DeviceDeleteMeasurementView(View):
+    success_url = reverse_lazy('profile:home')
+
+    def get_device(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def get_measurement(self, device, m_id):
+        return get_object_or_404(device.measurement_set, id=m_id)
+
+    def get(self, request, *args, **kwargs):
+        with transaction.atomic():
+            device = self.get_device()
+            measurement = self.get_measurement(device, self.kwargs['m_id'])
+
+            # Delete
+            measurement.delete()
+
+        return JsonResponse({'status': 'ok'})
 
 
 class XticksAndLabelsMixin:
@@ -528,11 +548,10 @@ class PaginationMeasurementsView(DeviceMeasurementsMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, d_sid, page, **kwargs):
-        context = super().get_context_data(**kwargs)
-
         device = Device.objects.get(user=self.request.user, sequence_id=d_sid)
-        context['object'] = device
 
+        context = super().get_context_data(**kwargs)
+        context['device'] = device
         m_context = self.get_measurements_context(device, page)
         context.update(m_context)
 

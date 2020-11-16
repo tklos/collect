@@ -5,9 +5,10 @@
 <table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle table-ajax">
 	<tr>
 		<th>Date added</th>
-		{% for column in object.columns %}
+		{% for column in device.columns %}
 			<th>{{column}}</th>
 		{% endfor %}
+		<th class="width-1px">Action</th>
 	</tr>
 	{% for m in measurements_page %}
 		<tr>
@@ -15,6 +16,7 @@
 			{% for value in m.data %}
 				<td>{{value}}</td>
 			{% endfor %}
+			<td><a class="measurement-delete-link" data-url="{% url 'devices:delete-measurement' d_sid=device.sequence_id m_id=m.id %}" href="#">Delete</a></td>
 		</tr>
 	{% endfor %}
 </table>

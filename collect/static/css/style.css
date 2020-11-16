@@ -81,9 +81,39 @@ td.td-ul-no-margin-bottom ul {
 	padding-right: 0px;
 }
 
+.btn-show-hide-data-panel {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .btn-delete-all-data {
 	margin-left: 20px;
 	margin-top: 20px;
+}
+
+.measurement-delete-link {
+	color: red;
+}
+
+tr.strikeout td {
+	position: relative;
+}
+
+tr.strikeout td:before {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    border-bottom: 1px solid #111;
+    width: 100%;
+}
+
+.div-plot {
+	margin-top: 20px;
+}
+
+.pagination-margins {
+	margin-bottom: 0px;
 }
 
 
