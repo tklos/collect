@@ -1,4 +1,9 @@
 
+ ** v1.1.0   16.11.2020
+    - Add downloading data
+    - Add deleting devices and data
+
+
  ** v1.0.0   30.07.2020
     - Add measurements plot
 
