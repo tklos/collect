@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Max
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
@@ -54,8 +54,10 @@ class Device(models.Model):
     def is_matching_api_key(self, api_key):
         return calculate_hash(api_key, self.salt) == self.api_key_hash
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if self.pk is None:
+            get_user_model().objects.select_for_update().get(pk=self.user.pk)
             last_seq_id = (
                 Device
                 .objects
