@@ -7,7 +7,9 @@
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
 {% endblock %}
 {% block head-extra-2 %}
-	<script src="{% static 'js/plot.js' %}"></script>
+	{% with static_version=100 %}
+		<script src="{% static 'js/plot.js' %}?v={{static_version}}"></script>
+	{% endwith %}
 {% endblock %}
 
 
