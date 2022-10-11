@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
-from django.db.models import Max
+from django.db.models import JSONField, Max
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 

@@ -19,6 +19,6 @@ A django application for storing and displaying data collected by iot devices, w
 ## Installation
 
  * Clone the repository
- * Create virtual environment
+ * Create a Python 3.8 virtual environment
  * Create `collect/settings/default.py` based on its `.template` version
 
