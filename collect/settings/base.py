@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'lib.settings',
     'users',
     'devices',
+    'runs',
     'measurements',
 ]
 
