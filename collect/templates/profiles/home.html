@@ -10,7 +10,7 @@
 
 <h1>Devices</h1>
 	<table class="table table-bordered table-condensed no-margin-bottom table-td-vertical-align-middle">
-		<tr><th>ID</th><th>Name</th><th>Token</th><th>Columns</th><th>Time range</th><th>Num meas.</th><th class="width-1px">Action</th></tr>
+		<tr><th>ID</th><th>Name</th><th>Token</th><th>Columns</th><th>Time range</th><th>Num runs</th><th>Num meas.</th><th>Num open meas.</th><th class="width-1px">Action</th></tr>
 		{% for d in devices %}
 			<tr>
 				<td>{{d.sequence_id}}</td>
@@ -18,7 +18,9 @@
 				<td class="monospace">{{d.token}}</td>
 				<td>{{d.columns|join:", "}}</td>
 				<td>{{d.get_time_range_display|safe}}</td>
-				<td>{{d.get_num_measurements_display}}</td>
+				<td>{{d.num_runs|default:""}}</td>
+				<td>{{d.num_measurements|default:""}}</td>
+				<td>{{d.num_unassigned_measurements|default:""}}</td>
 				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'devices:device' d_sid=d.sequence_id %}">View</a></td>
 			</tr>
 		{% endfor %}

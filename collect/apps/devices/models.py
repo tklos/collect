@@ -33,14 +33,12 @@ class Device(models.Model):
         return '{}{}'.format(self.token, '*' * (const.DEVICE_API_KEY_LEN - const.DEVICE_TOKEN_LEN))
 
     @cached_property
-    def num_measurements(self):
-        try:
-            return self.measurement_set__count
-        except AttributeError:
-            return self.measurement_set.count()
+    def num_runs(self):
+        return self.run_set.count()
 
-    def get_num_measurements_display(self):
-        return self.num_measurements or ''
+    @cached_property
+    def num_measurements(self):
+        return self.measurement_set.count()
 
     def get_time_range_display(self):
         if not self.num_measurements:

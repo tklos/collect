@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.views.generic import TemplateView
 
 from devices.forms import DeviceAddForm
@@ -13,8 +13,11 @@ class ProfileView(TemplateView):
             self.request.user
             .device_set
             .annotate(
-                Count('measurement_set'),
+                num_runs=Count('run_set'),
+                num_measurements=Count('measurement_set'),
+                num_unassigned_measurements=Count('measurement_set', filter=Q(measurement_set__run__isnull=True)),
             )
+            .order_by('sequence_id')
         )
 
         context = super().get_context_data(**kwargs)
