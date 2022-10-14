@@ -40,6 +40,14 @@ class Device(models.Model):
     def num_measurements(self):
         return self.measurement_set.count()
 
+    @cached_property
+    def unassgned_measurements(self):
+        return self.measurement_set.filter(run__isnull=True)
+
+    @cached_property
+    def num_unassigned_measurements(self):
+        return self.unassgned_measurements.count()
+
     def get_time_range_display(self):
         if not self.num_measurements:
             return ''

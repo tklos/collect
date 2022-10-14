@@ -9,6 +9,11 @@ class Run(models.Model):
     date_from = models.DateTimeField(null=True, blank=True)
     date_to = models.DateTimeField(null=True, blank=True)
 
+    def get_time_range_display(self):
+        if not self.date_from and not self.date_to:
+            return ''
+        return f'{self.date_from:%Y-%m-%d %H:%M:%S} &mdash; {self.date_to:%Y-%m-%d %H:%M:%S}'
+
     def __str__(self):
         return 'Run for device {}: "{}": {} \u2014 {}'.format(
             self.device,

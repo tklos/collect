@@ -1,5 +1,8 @@
 {% extends "common/base.html" %}
 
+{% load humanize %}
+
+
 {% block title %}
     Profile
 {% endblock %}
@@ -19,8 +22,8 @@
 				<td>{{d.columns|join:", "}}</td>
 				<td>{{d.get_time_range_display|safe}}</td>
 				<td>{{d.num_runs|default:""}}</td>
-				<td>{{d.num_measurements|default:""}}</td>
-				<td>{{d.num_unassigned_measurements|default:""}}</td>
+				<td>{{d.num_measurements|default:""|intcomma}}</td>
+				<td>{{d.num_unassigned_measurements|default:""|intcomma}}</td>
 				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'devices:device' d_sid=d.sequence_id %}">View</a></td>
 			</tr>
 		{% endfor %}
