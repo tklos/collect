@@ -5,6 +5,7 @@
         <tr>
 			<td>{{form.name.label_tag}}</td>
 			<td>{{form.name}}</td>
+			<td style="width:600px"></td>
 		</tr>
         <tr>
 			<td><label>Time:</label></td>
@@ -22,7 +23,7 @@
 			</td>
 		</tr>
         {% if form.errors %}
-            {% include "common/form_errors.html" with form=form colspan=2 only %}
+            {% include "common/form_errors.html" with form=form colspan=4 only %}
         {% endif %}
 		<tr>
             <td></td>

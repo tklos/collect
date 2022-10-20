@@ -30,10 +30,22 @@ class RunAddView(ABC, CreateView):
     # template_name =
     # success_url =
 
+    MAX_DATETIME = settings.LOCAL_TIMEZONE.localize(datetime(2100, 1, 1))
+
+    @transaction.atomic
     def form_valid(self, form):
-        device = get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+        device = get_object_or_404(Device.objects.select_for_update(), user=self.request.user, sequence_id=self.kwargs['d_sid'])
         name = form.cleaned_data['name']
-        # date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
+        date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
+
+        # Check that this run won't overlap with the other ones
+        all_runs = device.run_set.all()
+        self_date_from, self_date_to = date_from, date_to or datetime.max
+        for run in all_runs:
+            date_from, date_to = run.date_from, run.date_to or self.MAX_DATETIME
+            if self_date_from < date_to and date_from < self_date_to:
+                form.add_error(None, f'This run would overlap with run {run}')
+                return self.form_invalid(form)
 
         form.instance.device = device
 
@@ -46,7 +58,7 @@ class RunAddView(ABC, CreateView):
 
     @abstractmethod
     def get_context_data(self, **kwargs):
-        return super().get_context_data()
+        return super().get_context_data(**kwargs)
 
     def form_invalid(self, form):
         messages.error(self.request, 'Adding run failed')
