@@ -1,3 +1,9 @@
+"""API key authentication.
+
+API key can be specified in:
+    API-KEY HTTP header or
+    api-key data parameter
+"""
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -10,7 +16,9 @@ class ApiKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         api_key = request.META.get('HTTP_API_KEY')
         if api_key is None:
-            return None
+            api_key = request.data.get('api-key')
+            if api_key is None:
+                raise AuthenticationFailed('Missing API key')
 
         if len(api_key) != const.DEVICE_API_KEY_LEN:
             raise AuthenticationFailed('Incorrect API key')
