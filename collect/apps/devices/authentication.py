@@ -10,7 +10,7 @@ class ApiKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         api_key = request.META.get('HTTP_API_KEY')
         if api_key is None:
-            return None
+            raise AuthenticationFailed('Missing API key')
 
         if len(api_key) != const.DEVICE_API_KEY_LEN:
             raise AuthenticationFailed('Incorrect API key')
