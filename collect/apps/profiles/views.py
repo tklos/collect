@@ -12,9 +12,9 @@ def get_devices_context_data(user):
         user
         .device_set
         .annotate(
-            num_runs=Count('run_set'),
-            num_measurements=Count('measurement_set'),
-            num_unassigned_measurements=Count('measurement_set', filter=Q(measurement_set__run__isnull=True)),
+            num_runs=Count('run_set', distinct=True),
+            num_measurements=Count('measurement_set', distinct=True),
+            num_unassigned_measurements=Count('measurement_set', filter=Q(measurement_set__run__isnull=True), distinct=True),
         )
         .order_by('sequence_id')
     )

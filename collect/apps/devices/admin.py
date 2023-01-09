@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from runs.admin import RunInline
+
 from .models import Device
 
 
@@ -29,6 +31,9 @@ class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = (
         'token',
         'date_added',
+    )
+    inlines = (
+        RunInline,
     )
 
     def get_str(self, obj):

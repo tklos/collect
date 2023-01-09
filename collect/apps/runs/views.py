@@ -32,26 +32,39 @@ class RunAddView(ABC, CreateView):
 
     MAX_DATETIME = settings.LOCAL_TIMEZONE.localize(datetime(2100, 1, 1))
 
+    def _check_that_run_doesnt_overlap(self, device, date_from, date_to):
+        all_runs = device.run_set.all()
+        self_date_from, self_date_to = date_from, date_to or self.MAX_DATETIME
+        for run in all_runs:
+            date_from, date_to = run.date_from, run.date_to or self.MAX_DATETIME
+            if self_date_from < date_to and date_from < self_date_to:
+                return False, run
+
+        return True, None
+
     @transaction.atomic
     def form_valid(self, form):
         device = get_object_or_404(Device.objects.select_for_update(), user=self.request.user, sequence_id=self.kwargs['d_sid'])
         name = form.cleaned_data['name']
         date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
 
-        # Check that this run won't overlap with the other ones
-        all_runs = device.run_set.all()
-        self_date_from, self_date_to = date_from, date_to or datetime.max
-        for run in all_runs:
-            date_from, date_to = run.date_from, run.date_to or self.MAX_DATETIME
-            if self_date_from < date_to and date_from < self_date_to:
-                form.add_error(None, f'This run would overlap with run {run}')
-                return self.form_invalid(form)
+        ret, overlapping_run = self._check_that_run_doesnt_overlap(device, date_from, date_to)
+        if not ret:
+            form.add_error(None, f'This run would overlap with run {overlapping_run}')
+            return self.form_invalid(form)
 
         form.instance.device = device
 
         ret = super().form_valid(form)
 
-        msg = f'Run "{name}" added.<br/>'
+        # Move selected measurements to the newly created run
+        run = self.object
+        qs = device.measurement_set.filter(date_added__gte=date_from)
+        if date_to:
+            qs = qs.filter(date_added__lt=date_to+timedelta(seconds=1))
+        num_assigned = qs.update(run=run)
+
+        msg = f'Run "{name}" added. {num_assigned} measurements assigned.<br/>'
         messages.success(self.request, mark_safe(msg))
 
         return ret
