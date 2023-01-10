@@ -37,7 +37,7 @@ def get_runs_context_data(device):
 
 
 def get_unassigned_measurements_context_data(device, page):
-    measurements = device.unassgned_measurements.order_by('-date_added').all()
+    measurements = device.unassigned_measurements.order_by('-date_added').all()
 
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)

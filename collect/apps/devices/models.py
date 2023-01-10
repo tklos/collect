@@ -41,12 +41,12 @@ class Device(models.Model):
         return self.measurement_set.count()
 
     @cached_property
-    def unassgned_measurements(self):
+    def unassigned_measurements(self):
         return self.measurement_set.filter(run__isnull=True)
 
     @cached_property
     def num_unassigned_measurements(self):
-        return self.unassgned_measurements.count()
+        return self.unassigned_measurements.count()
 
     def get_time_range_display(self):
         if not self.num_measurements:

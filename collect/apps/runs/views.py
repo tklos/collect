@@ -1,5 +1,6 @@
 import csv
 import math
+import re
 import string
 import random
 from abc import ABC, abstractmethod
@@ -20,9 +21,117 @@ from django.views.generic import TemplateView, CreateView, DetailView, FormView
 
 from devices.models import Device
 from .models import Run
+# from .forms import DeviceDownloadForm
 # from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm, DeviceDeleteDataForm
 # from .functions import calculate_hash
 # from . import const
+
+
+def get_measurements_context_data(run, page):
+    measurements = run.measurement_set.order_by('-date_added').all()
+
+    measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
+    measurements_page = measurements_paginator.get_page(page)
+
+    return {
+        'measurements_page': measurements_page,
+        'measurements_extra': {
+            'r_id': run.pk,
+        },
+    }
+
+
+class RunView(DetailView):
+    template_name = 'runs/run.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        m_context = get_measurements_context_data(self.object, 1)
+
+        context.update(**m_context)
+
+        return context
+
+
+class RunDownloadDataView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def post(self, request, *args, **kwargs):
+        run = self.get_object()
+        device = run.device
+        # clean_device_name = run.device.name.replace(' ', '_')
+        # clean_run_name = run.name.replace(' ', '_')
+        clean_device_name = re.sub('[^\w]', '_', run.device.name)
+        clean_run_name = re.sub('[^\w]', '_', run.name)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="data-{clean_device_name}-{clean_run_name}.csv"'
+
+        writer = csv.writer(response)
+
+        # Write header
+        writer.writerow(['Date added'] + device.columns)
+
+        # Write data
+        for m in run.measurement_set.order_by('date_added'):
+            writer.writerow([m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')] + m.data)
+
+        return response
+
+
+class RunDeleteRunView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get_success_url(self):
+        return reverse_lazy('devices:device', kwargs={'d_sid': self.object.device.sequence_id})
+
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            run = self.object = self.get_object()
+
+            # Delete
+            num_deleted, _ = run.measurement_set.all().delete()
+            run.delete()
+
+        messages.success(self.request, f'Run {run.name} and its {num_deleted} records deleted')
+
+        return redirect(self.get_success_url())
+
+
+class PaginationMeasurementsView(TemplateView):
+    template_name = 'runs/run_measurements.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.is_ajax():
+            raise RuntimeError('Ajax request expected')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, r_id, page, **kwargs):
+        run = get_object_or_404(Run.objects, device__user=self.request.user, pk=r_id)
+
+        context = super().get_context_data(**kwargs)
+        context['run'] = run
+
+        m_context = get_measurements_context_data(run, page)
+        context.update(m_context)
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+
+        data = {
+            'html': response.rendered_content,
+        }
+        return JsonResponse(data)
 
 
 class RunAddView(ABC, CreateView):

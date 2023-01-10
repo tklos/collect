@@ -76,14 +76,12 @@ td.td-ul-no-margin-bottom ul {
 
 
 /* Buttons */
-.btn-show-hide-data-delete-panel {
+.btn-show-hide-panel {
 	padding-left: 0px;
 	padding-right: 0px;
 }
-
-.btn-show-hide-data-panel {
-	padding-left: 0px;
-	padding-right: 0px;
+.div-show-hide-panel-link {
+    padding-bottom: 10px;
 }
 
 .btn-delete-all-data {

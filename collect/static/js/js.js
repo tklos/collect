@@ -47,16 +47,20 @@ $(document).ready(function() {
 
 
 	/* Delete device data */
-	$("body").on("click", "button.btn-show-hide-data-delete-panel", function(event) {
+	$("body").on("click", "button.btn-show-hide-panel", function(event) {
 		var target = $(event.target);
-		var div = $("body").find(".div-delete");
+		var link = target.closest(".div-show-hide-panel-link");
+		var display_div = link.next();
 
-		if (div.hasClass("display-none")) {
-			target.html("Hide delete panel");
-			div.removeClass("display-none");
+		var msg_show = target.data("show-msg");
+		var msg_hide = target.data("hide-msg");
+
+		if (display_div.hasClass("display-none")) {
+			target.html(msg_hide);
+			display_div.removeClass("display-none");
 		} else {
-			target.html("Show delete panel");
-			div.addClass("display-none");
+			target.html(msg_show);
+			display_div.addClass("display-none");
 		}
 	});
 
@@ -81,19 +85,6 @@ $(document).ready(function() {
 
 
 	/* Data panel */
-	$("body").on("click", "button.btn-show-hide-data-panel", function(event) {
-		var target = $(event.target);
-		var div = $("body").find(".div-data");
-
-		if (div.hasClass("display-none")) {
-			target.html("Hide data panel");
-			div.removeClass("display-none");
-		} else {
-			target.html("Show data panel");
-			div.addClass("display-none");
-		}
-	});
-
 	$("body").on("click", ".measurement-delete-link", function (event) {
 		event.preventDefault();
 

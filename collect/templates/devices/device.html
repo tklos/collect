@@ -16,7 +16,7 @@
 <h1>Device {{object.name}}</h1>
 
 
-<h2>Basic information</h2>
+<h2>Details</h2>
 	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
 		<tr>
 			<td><label>Token:</label></td>
@@ -36,8 +36,8 @@
 			<tr>
 				<td>{{r.name}}</td>
 				<td>{{r.get_time_range_display|safe}}</td>
-				<td>{{r.num_measurements|default:""}}</td>
-				<td><a class="btn btn-primary btn-padding-tb-sm" href="???">View</a></td>
+				<td>{{r.num_measurements|default:""|intcomma}}</td>
+				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'runs:run' r_id=r.pk %}">View</a></td>
 			</tr>
 		{% empty %}
 			<tr><td colspan="100">No runs..</td></tr>

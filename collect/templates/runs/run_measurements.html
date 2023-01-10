@@ -1,0 +1,25 @@
+
+{% load common_tags %}
+
+
+<table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle table-ajax">
+	<tr>
+		<th>Date added</th>
+		{% for column in run.device.columns %}
+			<th>{{column}}</th>
+		{% endfor %}
+		<th class="width-1px">Action</th>
+	</tr>
+	{% for m in measurements_page %}
+		<tr>
+			<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
+			{% for value in m.data %}
+				<td>{{value}}</td>
+			{% endfor %}
+			<td><a class="measurement-delete-link" data-url="{% url 'measurements:delete' m_id=m.id %}" href="#">Delete</a></td>
+		</tr>
+	{% endfor %}
+</table>
+
+{% include "common/pagination.html" with paginator_page=measurements_page ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
+
