@@ -85,7 +85,7 @@ class RunDownloadDataView(View):
         return response
 
 
-class RunDeleteRunView(View):
+class RunDeleteRunDetachDataView(View):
 
     def get_object(self):
         return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
@@ -97,8 +97,33 @@ class RunDeleteRunView(View):
         with transaction.atomic():
             run = self.object = self.get_object()
 
-            # Delete
+            # Detach measurements
+            num_detached = run.measurement_set.all().update(run=None)
+
+            # Delete run
+            run.delete()
+
+        messages.success(self.request, f'Run {run.name} daleted; its {num_detached} records are now unassigned')
+
+        return redirect(self.get_success_url())
+
+
+class RunDeleteRunAndDataView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get_success_url(self):
+        return reverse_lazy('devices:device', kwargs={'d_sid': self.object.device.sequence_id})
+
+    def post(self, request, *args, **kwargs):
+        with transaction.atomic():
+            run = self.object = self.get_object()
+
+            # Delete measurements
             num_deleted, _ = run.measurement_set.all().delete()
+
+            # Delete run
             run.delete()
 
         messages.success(self.request, f'Run {run.name} and its {num_deleted} records deleted')

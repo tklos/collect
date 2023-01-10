@@ -65,7 +65,8 @@
 		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show data panel" data-hide-msg="Hide data panel">Show delete panel</button>
 	</div>
 	<div class="div-show-hide-panel display-none">
-		{% include "runs/run_delete_run.html" with run=object csrf_token=csrf_token only %}
+		{% include "runs/run_delete_run_detach_data.html" with run=object csrf_token=csrf_token only %}
+		{% include "runs/run_delete_run_and_data.html" with run=object csrf_token=csrf_token only %}
 	</div>
 
 
