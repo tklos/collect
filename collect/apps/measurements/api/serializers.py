@@ -1,3 +1,7 @@
+from datetime import timedelta
+
+from django.db import transaction
+from django.db.models import Q
 from rest_framework import serializers
 
 from measurements.models import Measurement
@@ -18,10 +22,21 @@ class MeasurementSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        obj = Measurement.objects.create(
-            device=self.context['device'],
-            run=None,
-            data=validated_data['data'],
-        )
+        device = self.context['device']
+
+        # Save measurement
+        with transaction.atomic():
+            obj = Measurement.objects.create(
+                device=device,
+                run=None,
+                data=validated_data['data'],
+            )
+
+            # Set run that this measurement belongs to (might not exist)
+            run = device.run_set.filter(Q(date_from__lte=obj.date_added) & (Q(date_to=None) | Q(date_to__gt=obj.date_added-timedelta(seconds=1)))).first()
+            if run:
+                obj.run = run
+                obj.save()
+
         return obj
 
