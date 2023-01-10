@@ -32,7 +32,12 @@
 
 
 <h2>Add device</h2>
-	{% include 'profiles/add_device.html' with form=device_add_form csrf_token=csrf_token only %}
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show create panel" data-hide-msg="Hide create panel">Show create panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		{% include 'profiles/add_device.html' with form=device_add_form csrf_token=csrf_token only %}
+	</div>
 
 
 <div class="margin-bottom-200px"></div>

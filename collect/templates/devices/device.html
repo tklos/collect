@@ -46,7 +46,12 @@
 
 
 <h2>Create new run</h2>
-	{% include 'devices/add_run.html' with device=object form=run_add_form csrf_token=csrf_token only %}
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show create panel" data-hide-msg="Hide create panel">Show create panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		{% include 'devices/add_run.html' with device=object form=run_add_form csrf_token=csrf_token only %}
+	</div>
 
 
 <h2>Unassigned measurements (total: {{object.num_unassigned_measurements|intcomma}})</h2>

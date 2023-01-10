@@ -4,7 +4,7 @@ $(document).ready(function() {
 	$('[data-toggle="tooltip"]').tooltip();
 
 
-	/* Download device data */
+	/* Download data */
 	$("body").on("submit", "#form-download", function(event) {
 		event.preventDefault();
 
@@ -14,12 +14,8 @@ $(document).ready(function() {
 			type: form.attr("method"),
 			url: form.attr("action"),
 			data: form.serialize(),
-			// responseType: "blob",
-			// dataType: "json",
 
 			beforeSend: function() {
-				/* Clear previous errors */
-				$("#form-download-errors").remove();
 			},
 
 			success: function(data, status, response) {
@@ -46,7 +42,7 @@ $(document).ready(function() {
 	});
 
 
-	/* Delete device data */
+	/* Show/Hide panels */
 	$("body").on("click", "button.btn-show-hide-panel", function(event) {
 		var target = $(event.target);
 		var link = target.closest(".div-show-hide-panel-link");
@@ -63,6 +59,16 @@ $(document).ready(function() {
 			display_div.addClass("display-none");
 		}
 	});
+
+    /* Show panel if there were any errors */
+	$(".form-panel-errors").each(function(idx, el) {
+	    var display_div = $(el).closest(".div-show-hide-panel");
+	    var link = display_div.prev();
+	    var button = link.find(".btn-show-hide-panel");
+
+	    button.click();
+	});
+
 
 	// $("#delete-data-modal").on("shown.bs.modal", function (e) {
 	$("body").on("click", ".btn-delete-data", function (event) {
