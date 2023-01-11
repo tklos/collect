@@ -10,6 +10,7 @@
 {% block head-extra-2 %}
 	{% with static_version=100 %}
 		<script src="{% static 'js/plot.js' %}?v={{static_version}}"></script>
+		<script src="{% static 'js/map.js' %}?v={{static_version}}"></script>
 	{% endwith %}
 {% endblock %}
 
@@ -79,6 +80,14 @@
 			{% include "runs/run_measurements.html" with run=object measurements_page=measurements_page measurements_extra=measurements_extra only %}
 		</div>
 	</div>
+
+
+{% if object.device.has_map %}
+	<h2>Map</h2>
+		<div id="map"></div>
+		{{locations_l|json_script:"id-locations-l"}}
+		<script async src="https://maps.googleapis.com/maps/api/js?key={{MAPS_API_KEY}}&callback=initMap" defer></script>
+{% endif %}
 
 
 <div class="margin-bottom-200px"></div>

@@ -48,6 +48,10 @@ class Device(models.Model):
     def num_unassigned_measurements(self):
         return self.unassigned_measurements.count()
 
+    @property
+    def has_map(self):
+        return 'lat' in self.columns and 'lon' in self.columns
+
     def get_time_range_display(self):
         if not self.num_measurements:
             return ''

@@ -41,6 +41,21 @@ def get_measurements_context_data(run, page):
     }
 
 
+def get_map_context_data(run):
+    lat_idx, lon_idx = run.device.columns.index('lat'), run.device.columns.index('lon')
+
+    locations = [
+        (idx, m.data[lat_idx], m.data[lon_idx], m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'))
+        for idx, m in enumerate(run.measurement_set.order_by('date_added').all(), 1)
+    ]
+
+    return {
+        'locations_l': locations,
+
+        'MAPS_API_KEY': settings.MAPS_API_KEY,
+    }
+
+
 class RunView(DetailView):
     template_name = 'runs/run.html'
 
@@ -54,6 +69,10 @@ class RunView(DetailView):
 
         context.update(**m_context)
 
+        if self.object.device.has_map:
+            map_context = get_map_context_data(self.object)
+            context.update(**map_context)
+
         return context
 
 
@@ -65,8 +84,6 @@ class RunDownloadDataView(View):
     def post(self, request, *args, **kwargs):
         run = self.get_object()
         device = run.device
-        # clean_device_name = run.device.name.replace(' ', '_')
-        # clean_run_name = run.name.replace(' ', '_')
         clean_device_name = re.sub('[^\w]', '_', run.device.name)
         clean_run_name = re.sub('[^\w]', '_', run.name)
 
