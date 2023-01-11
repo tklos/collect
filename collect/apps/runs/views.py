@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models.functions import Now
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
@@ -74,6 +75,33 @@ class RunView(DetailView):
             context.update(**map_context)
 
         return context
+
+
+class RunFinaliseView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get_success_url(self):
+        return reverse_lazy('runs:run', kwargs=self.kwargs)
+
+    def post(self, request, *args, **kwargs):
+        run = self.object = self.get_object()
+        if run.date_to:
+            raise RuntimeError('Run already finalised')
+
+        # Detach measurements
+        run.date_to = Now()
+        run.save()
+
+        # Remove microseconds
+        run.refresh_from_db()
+        run.date_to = run.date_to.replace(microsecond=0)
+        run.save()
+
+        messages.success(self.request, f'Run {run.name} finalised')
+
+        return redirect(self.get_success_url())
 
 
 class RunDownloadDataView(View):

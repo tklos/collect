@@ -43,7 +43,40 @@
 		</tr>
 		<tr>
 			<td><label>Date to:</label></td>
-			<td>{{object.date_to|default_if_none:"current"}}</td>
+			<td>
+				<table><tr>
+					<td>{{object.date_to|default_if_none:"current"}}</td>
+					{% if not object.date_to %}
+						<td>
+							<form method="post" id="form-delete-data" action="{% url 'runs:finalise' r_id=run.pk %}">
+								{% csrf_token %}
+
+								<a href ="#" type="button" class="btn-finalise-run" data-toggle="modal" data-target="#finalise-run-modal">Finalise run</a>
+
+								<div id="finalise-run-modal" class="modal fade" role="dialog" tabindex="-1">
+									<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal">&times;</button>
+												<h4 class="modal-title">Finalise run</h4>
+											</div>
+											<div class="modal-body">
+												Are you sure you want to finalise this run?
+											</div>
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default" data-dismiss="modal">
+													Cancel
+												</button>
+												<input type="submit" value="Finalise run" class="btn btn-primary"/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</td>
+					{% endif %}
+				</tr></table>
+			</td>
 		</tr>
 		<tr>
 			<td><label>Num meas.:</label></td>

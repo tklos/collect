@@ -127,6 +127,10 @@ tr.strikeout td:before {
 	margin-left: 20px;
 }
 
+.btn-finalise-run {
+    margin-left: 30px;
+}
+
 label {
 	margin-bottom: 0px;
 }
