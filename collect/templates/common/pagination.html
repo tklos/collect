@@ -4,7 +4,7 @@
 {% with paginator=paginator_page.paginator page_number=paginator_page.number %}
 {% get_limited_page_range paginator page_number as page_range %}
 
-<ul class="pagination pagination-sm pagination-margins">
+<ul class="pagination pagination-sm {{pagination_class}}">
     {% if paginator_page.has_previous %}
         <li><a class="a-paginator" href="#" data-url="{% make_url ajax_url page=paginator_page.previous_page_number extra=extra %}">Prev</a></li>
     {% else %}

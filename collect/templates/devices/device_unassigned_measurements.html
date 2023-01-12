@@ -21,5 +21,5 @@
 	{% endfor %}
 </table>
 
-{% include "common/pagination.html" with paginator_page=measurements_page ajax_url="devices:pagination-unassigned-measurements" extra=measurements_extra only %}
+{% include "common/pagination.html" with paginator_page=measurements_page pagination_class="pagination-bottom" ajax_url="devices:pagination-unassigned-measurements" extra=measurements_extra only %}
 

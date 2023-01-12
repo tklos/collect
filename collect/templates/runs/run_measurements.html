@@ -2,6 +2,8 @@
 {% load common_tags %}
 
 
+{% include "common/pagination.html" with paginator_page=measurements_page pagination_class="pagination-top" ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
+
 <table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle table-ajax">
 	<tr>
 		<th>Date added</th>
@@ -21,5 +23,5 @@
 	{% endfor %}
 </table>
 
-{% include "common/pagination.html" with paginator_page=measurements_page ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
+{% include "common/pagination.html" with paginator_page=measurements_page pagination_class="pagination-bottom" ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
 

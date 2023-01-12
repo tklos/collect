@@ -105,7 +105,12 @@ tr.strikeout td:before {
 	margin-top: 20px;
 }
 
-.pagination-margins {
+.pagination-top {
+    margin-top: 0px;
+	margin-bottom: 0px;
+}
+.pagination-bottom {
+    margin-top: 10px;
 	margin-bottom: 0px;
 }
 
