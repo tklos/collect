@@ -34,8 +34,11 @@ def get_measurements_context_data(run, page):
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)
 
+    start_idx = measurements_paginator.count - measurements_page.start_index() + 1
+
     return {
         'measurements_page': measurements_page,
+        'measurements_l': zip(range(start_idx, start_idx-settings.MEASUREMENTS_PAGINATE_BY, -1), measurements_page),
         'measurements_extra': {
             'r_id': run.pk,
         },
