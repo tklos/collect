@@ -16,20 +16,27 @@ $(document).ready(function() {
 		},
 		options: {
 			spanGaps: true,
-			tooltips: {
-				mode: "index",
-				intersect: false,
-				bodyFontColor: "#000000",
-				bodyFontSize: 14,
-				backgroundColor: "rgba(255, 250, 250, 0.7)",
-				titleFontColor: "#000000",
-				titleFontSize: 14,
-				borderColor: "rgba(0, 0, 0, 0.7)",
-				borderWidth: 1,
-				bodySpacing: 4,
-				callbacks: {
-					title: function(tooltip_item, data) {
-						return data.time_fmt[tooltip_item[0].index];
+			plugins: {
+				tooltip: {
+					mode: "index",
+					intersect: false,
+					bodyColor: "#000000",
+					bodyFont: {
+						size: 14,
+					},
+					backgroundColor: "rgba(255, 250, 250, 0.7)",
+					titleColor: "#000000",
+					titleFont: {
+						size: 14,
+					},
+					borderColor: "rgba(0, 0, 0, 0.7)",
+					borderWidth: 1,
+					bodySpacing: 4,
+					boxPadding: 5,
+					callbacks: {
+						title: function(context) {
+							return config.data.time_fmt[context[0].dataIndex];
+						},
 					},
 				},
 			},
@@ -38,7 +45,7 @@ $(document).ready(function() {
 				intersect: true,
 			},
 			scales: {
-				xAxes: [{
+				x: {
 					type: "linear",
 					distribution: "series",
 					ticks: {
@@ -46,13 +53,14 @@ $(document).ready(function() {
 							return config.data.xticklabels[index];
 						},
 					},
-					afterBuildTicks: function(axis, ticks) {
-						/* Sets axis limits and returns tick locations */
+					afterBuildTicks: function(axis) {
+						/* Sets axis limits and tick locations */
 						axis.min = config.data.xlimits[0];
 						axis.max = config.data.xlimits[1];
-						return config.data.xticks;
+
+						axis.ticks = config.data.xticks.map(v => ({value: v}));
 					},
-				}],
+				},
 			},
 		},
 	}
