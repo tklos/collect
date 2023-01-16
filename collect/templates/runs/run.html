@@ -18,6 +18,12 @@
 {% block title %}Device {{object.device.name}}, Run {{object.name}} {% endblock %}
 
 
+{% block breadcrumbs %}
+<li><a href="{% url 'devices:device' d_sid=object.device.sequence_id %}">Device {{object.device.name}}</a></li>
+<li><a href="{% url 'runs:run' r_id=object.pk %}">Run {{object.name}}</a></li>
+{% endblock %}
+
+
 {% load common_tags %}
 
 

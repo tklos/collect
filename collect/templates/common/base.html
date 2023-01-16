@@ -31,6 +31,7 @@
 					<a class="navbar-brand" href="{% url 'profile:home' %}">Collect</a>
 				</div>
 				<ul class="nav navbar-nav">
+					{% block breadcrumbs %}{% endblock %}
 					{% if user.is_authenticated %}
 						{% if user.is_superuser %}
 							<li><a href="{% url 'admin:index' %}">Django-admin panel</a></li>

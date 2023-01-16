@@ -7,6 +7,11 @@
 {% block title %}Device {{object.name}}{% endblock %}
 
 
+{% block breadcrumbs %}
+<li><a href="{% url 'devices:device' d_sid=object.sequence_id %}">Device {{object.name}}</a></li>
+{% endblock %}
+
+
 {% load common_tags %}
 
 
