@@ -49,6 +49,10 @@ class Device(models.Model):
         return self.unassigned_measurements.count()
 
     @property
+    def has_plot(self):
+        return not self.has_map
+
+    @property
     def has_map(self):
         return 'lat' in self.columns and 'lon' in self.columns
 

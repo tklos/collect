@@ -60,6 +60,97 @@ def get_map_context_data(run):
     }
 
 
+class PlotContextData:
+    XTICK_INTERVALS = [
+        timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
+        timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
+        timedelta(days=1),
+    ]
+    MAX_NUM_XTICKS = 7
+
+    def __init__(self, run, *args, **kwargs):
+        self.run = run
+        super().__init__(*args, **kwargs)
+
+    def _calculate_xticks(self, begin_dt, end_dt):
+        """Calculate x-axis ticks for the limits of [begin_dt, end_dt].
+
+        Parameters:
+            begin_dt: aware datetime
+            end_dt: aware datetime
+
+        Returns: tuple of list
+            xticks_e: list of float
+            xticks_dt: list of aware datetime
+                in local timezone
+        """
+        # Local timestamps, but with timezones set to UTC
+        begin_dt_utc, end_dt_utc = begin_dt.astimezone(settings.LOCAL_TIMEZONE).replace(tzinfo=timezone.utc), end_dt.astimezone(settings.LOCAL_TIMEZONE).replace(tzinfo=timezone.utc)
+        begin_e, end_e = begin_dt_utc.timestamp(), end_dt_utc.timestamp()
+
+        for interval in self.XTICK_INTERVALS:
+            interval_s = int(interval.total_seconds())
+
+            min_e, max_e = math.ceil(begin_e / interval_s) * interval_s, math.floor(end_e / interval_s) * interval_s
+
+            num_ticks = (max_e - min_e) // interval_s + 1
+            if num_ticks > self.MAX_NUM_XTICKS and interval != self.XTICK_INTERVALS[-1]:
+                continue
+
+            xticks_e = [min_e + i * interval_s for i in range(num_ticks)]
+            xticks_dt = [settings.LOCAL_TIMEZONE.localize(datetime.utcfromtimestamp(xtick)) for xtick in xticks_e]
+            xticks_e = [xtick.timestamp() for xtick in xticks_dt]
+
+            return xticks_e, xticks_dt
+
+        return [], []
+
+    @staticmethod
+    def _calculate_xticklabels(xticks_dt):
+        labels = [xtick.strftime('%H:%M') for xtick in xticks_dt]
+        for idx, xtick in enumerate(xticks_dt):
+            if idx == 0 or xticks_dt[idx-1].date() != xtick.date():
+                labels[idx] = [xtick.strftime('%Y-%m-%d'), xtick.strftime('%H:%M')]
+
+        return labels
+
+    def get_plot_context_data(self):
+        run = self.run
+        device = run.device
+        columns = device.columns
+        measurements = run.measurement_set.order_by('date_added').all()
+
+        # Process measurements
+        time_dt, data = [], [[] for _ in range(len(columns))]
+        for measurement in measurements:
+            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
+            for idx, value in enumerate(measurement.data):
+                data[idx].append(value)
+
+        # Convert to unix timestamp
+        time_e = [t.timestamp() for t in time_dt]
+
+        xlim_dt = (
+            run.date_from,
+            run.date_to if run.date_to else run.date_from + timedelta(days=1),
+        )
+
+        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        # Return data
+        return {
+            'labels': device.columns,
+            'time': time_e,
+            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dt],
+            'data': data,
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
+        }
+
+
 class RunView(DetailView):
     template_name = 'runs/run.html'
 
@@ -72,6 +163,10 @@ class RunView(DetailView):
         m_context = get_measurements_context_data(self.object, 1)
 
         context.update(**m_context)
+
+        if self.object.device.has_plot:
+            plot_data = PlotContextData(self.object).get_plot_context_data()
+            context['plot_data'] = plot_data
 
         if self.object.device.has_map:
             map_context = get_map_context_data(self.object)
@@ -177,108 +272,6 @@ class RunDeleteRunAndDataView(View):
         messages.success(self.request, f'Run {run.name} and its {num_deleted} records deleted')
 
         return redirect(self.get_success_url())
-
-
-class RunPlotInitialDataView(View):
-    http_method_names = ['get']
-
-    XTICK_INTERVALS = [
-        timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
-        timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
-        timedelta(days=1),
-    ]
-    MAX_NUM_XTICKS = 7
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            raise PermissionDenied('Ajax request expected')
-        return super().dispatch(request, *args, **kwargs)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def get_object(self):
-        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
-
-    def get(self, request, *args, **kwargs):
-        # Get measurements
-        run = self.get_object()
-        device = run.device
-        columns = run.device.columns
-        measurements = run.measurement_set.order_by('date_added').all()
-
-        # Process measurements
-        time_dt, data = [], [[] for _ in range(len(columns))]
-        for measurement in measurements:
-            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
-            for idx, value in enumerate(measurement.data):
-                data[idx].append(value)
-
-        # Convert to unix timestamp
-        time_e = [t.timestamp() for t in time_dt]
-
-        xlim_dt = (
-            run.date_from,
-            run.date_to if run.date_to else run.date_from + timedelta(days=1),
-        )
-
-        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
-        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
-        xticklabels = self._calculate_xticklabels(xticks_dt)
-
-        # Return data
-        data = {
-            'labels': device.columns,
-            'time': time_e,
-            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dt],
-            'data': data,
-            'xlimits': xlim_e,
-            'xticks': xticks_e,
-            'xticklabels': xticklabels,
-        }
-        return JsonResponse(data)
-
-    def _calculate_xticks(self, begin_dt, end_dt):
-        """Calculate x-axis ticks for the limits of [begin_dt, end_dt].
-
-        Parameters:
-            begin_dt: aware datetime
-            end_dt: aware datetime
-
-        Returns: tuple of list
-            xticks_e: list of float
-            xticks_dt: list of aware datetime
-                in local timezone
-        """
-        # Local timestamps, but with timezones set to UTC
-        begin_dt_utc, end_dt_utc = begin_dt.astimezone(settings.LOCAL_TIMEZONE).replace(tzinfo=timezone.utc), end_dt.astimezone(settings.LOCAL_TIMEZONE).replace(tzinfo=timezone.utc)
-        begin_e, end_e = begin_dt_utc.timestamp(), end_dt_utc.timestamp()
-
-        for interval in self.XTICK_INTERVALS:
-            interval_s = int(interval.total_seconds())
-
-            min_e, max_e = math.ceil(begin_e / interval_s) * interval_s, math.floor(end_e / interval_s) * interval_s
-
-            num_ticks = (max_e - min_e) // interval_s + 1
-            if num_ticks > self.MAX_NUM_XTICKS and interval != self.XTICK_INTERVALS[-1]:
-                continue
-
-            xticks_e = [min_e + i * interval_s for i in range(num_ticks)]
-            xticks_dt = [settings.LOCAL_TIMEZONE.localize(datetime.utcfromtimestamp(xtick)) for xtick in xticks_e]
-            xticks_e = [xtick.timestamp() for xtick in xticks_dt]
-
-            return xticks_e, xticks_dt
-
-        return [], []
-
-    @staticmethod
-    def _calculate_xticklabels(xticks_dt):
-        labels = [xtick.strftime('%H:%M') for xtick in xticks_dt]
-        for idx, xtick in enumerate(xticks_dt):
-            if idx == 0 or xticks_dt[idx-1].date() != xtick.date():
-                labels[idx] = [xtick.strftime('%Y-%m-%d'), xtick.strftime('%H:%M')]
-
-        return labels
 
 
 class PaginationMeasurementsView(TemplateView):
