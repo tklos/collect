@@ -32,7 +32,7 @@ $(document).ready(function() {
 		data: {
 			labels: data.time,
 			datasets: datasets,
-			time_fmt: data.time_fmt,
+			titles: data.titles,
 			xlimits: data.xlimits,
 			xticks: data.xticks,
 			xticklabels: data.xticklabels,
@@ -58,7 +58,7 @@ $(document).ready(function() {
 					boxPadding: 5,
 					callbacks: {
 						title: function(context) {
-							return config.data.time_fmt[context[0].dataIndex];
+							return config.data.titles[context[0].dataIndex];
 						},
 					},
 				},

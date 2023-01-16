@@ -81,7 +81,7 @@ td.td-ul-no-margin-bottom ul {
 	padding-right: 0px;
 }
 .div-show-hide-panel-link {
-    padding-bottom: 10px;
+	padding-bottom: 10px;
 }
 
 .measurement-delete-link {
@@ -93,20 +93,20 @@ tr.strikeout td {
 }
 
 tr.strikeout td:before {
-    content: " ";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    border-bottom: 1px solid #111;
-    width: 100%;
+	content: " ";
+	position: absolute;
+	top: 50%;
+	left: 0;
+	border-bottom: 1px solid #111;
+	width: 100%;
 }
 
 .pagination-top {
-    margin-top: 0px;
+	margin-top: 0px;
 	margin-bottom: 0px;
 }
 .pagination-bottom {
-    margin-top: 10px;
+	margin-top: 10px;
 	margin-bottom: 0px;
 }
 
@@ -116,20 +116,8 @@ tr.strikeout td:before {
 	display: none;
 }
 
-#form-date {
-	margin-top: 20px;
-}
-
-#form-ylimits {
-	margin-top: 15px;
-}
-
-.btn-ylimits-reset {
-	margin-left: 20px;
-}
-
 .btn-finalise-run {
-    margin-left: 30px;
+	margin-left: 30px;
 }
 
 label {
@@ -161,10 +149,6 @@ label {
 
 .width-input-date-long {
 	width: 180px;
-}
-
-.width-input-ylimits {
-	width: 80px;
 }
 
 .width-long {
@@ -222,7 +206,7 @@ label {
 
 /* Map */
 #map {
-    width: 100%;
-    height: 800px;
+	width: 100%;
+	height: 800px;
 }
 

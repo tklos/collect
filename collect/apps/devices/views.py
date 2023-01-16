@@ -1,28 +1,21 @@
-import csv
-import math
 import string
 import random
 from abc import ABC, abstractmethod
-from datetime import timedelta, timezone, datetime
 
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db import transaction
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy, reverse
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
-from django.views import View
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import TemplateView, CreateView, DetailView, FormView
+from django.views.generic import TemplateView, CreateView, DetailView
 
 import runs.views
 
 from .models import Device
 from .forms import RunAddForm
-# from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm, DeviceDeleteDataForm
 from .functions import calculate_hash
 from . import const
 
@@ -72,7 +65,7 @@ class PaginationUnassignedMeasurementsView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.is_ajax():
-            raise RuntimeError('Ajax request expected')
+            raise PermissionDenied('Ajax request expected')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, d_sid, page, **kwargs):

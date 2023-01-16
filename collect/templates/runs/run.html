@@ -37,7 +37,7 @@
 	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
 		<tr>
 			<td><label>Device:</label></td>
-			<td><span class="monospace">{{object.device.name}}</span></td>
+			<td>{{object.device.name}}</td>
 		</tr>
 		<tr>
 			<td><label>Columns:</label></td>
@@ -116,7 +116,7 @@
 	</div>
 	<div class="div-show-hide-panel display-none">
 		<div class="div-ajax">
-			{% include "runs/run_measurements.html" with run=object measurements_page=measurements_page measurements_l=measurements_l measurements_extra=measurements_extra only %}
+			{% include "runs/run_measurements.html" with run=object measurements_page=measurements_page measurements_l=measurements_l measurements_extra=measurements_extra csrf_token=csrf_token only %}
 		</div>
 	</div>
 

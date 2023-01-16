@@ -61,7 +61,7 @@
 
 <h2>Unassigned measurements (total: {{object.num_unassigned_measurements|intcomma}})</h2>
 	<div class="div-ajax">
-		{% include "devices/device_unassigned_measurements.html" with device=object measurements_page=measurements_page measurements_extra=measurements_extra only %}
+		{% include "devices/device_unassigned_measurements.html" with device=object measurements_page=measurements_page measurements_extra=measurements_extra csrf_token=csrf_token only %}
 	</div>
 
 

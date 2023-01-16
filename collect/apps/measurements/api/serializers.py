@@ -33,7 +33,11 @@ class MeasurementSerializer(serializers.ModelSerializer):
             )
 
             # Set run that this measurement belongs to (might not exist)
-            run = device.run_set.filter(Q(date_from__lte=obj.date_added) & (Q(date_to=None) | Q(date_to__gt=obj.date_added-timedelta(seconds=1)))).first()
+            run = device.run_set.filter(
+                Q(date_from__lte=obj.date_added) & (
+                    Q(date_to=None) | Q(date_to__gt=obj.date_added-timedelta(seconds=1))
+                )
+            ).first()
             if run:
                 obj.run = run
                 obj.save()

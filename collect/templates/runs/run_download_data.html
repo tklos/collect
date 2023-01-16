@@ -1,7 +1,5 @@
 
-<form method="post" action="{% url 'runs:download' r_id=run.pk %}">
-	{% csrf_token %}
-
+<form method="get" action="{% url 'runs:download' r_id=run.pk %}">
 	<input type="submit" value="Download data" class="btn btn-primary"/>
 </form>
 

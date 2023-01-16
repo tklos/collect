@@ -20,7 +20,7 @@
 			{% for value in m.data %}
 				<td>{{value}}</td>
 			{% endfor %}
-			<td><a class="measurement-delete-link" data-url="{% url 'measurements:delete' m_id=m.id %}" href="#">Delete</a></td>
+			<td><a class="measurement-delete-link" data-url="{% url 'measurements:delete' m_id=m.id %}" data-csrftoken="{{csrf_token}}" href="#">Delete</a></td>
 		</tr>
 	{% endfor %}
 </table>

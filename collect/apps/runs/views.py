@@ -1,8 +1,6 @@
 import csv
 import math
 import re
-import string
-import random
 from abc import ABC, abstractmethod
 from datetime import timedelta, timezone, datetime
 
@@ -14,18 +12,13 @@ from django.db import transaction
 from django.db.models.functions import Now
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import TemplateView, CreateView, DetailView, FormView
+from django.views.generic import TemplateView, CreateView, DetailView
 
 from devices.models import Device
 from .models import Run
-# from .forms import DeviceDownloadForm
-# from .forms import DeviceAddForm, DeviceDownloadForm, DevicePlotDateForm, DeviceDeleteDataForm
-# from .functions import calculate_hash
-# from . import const
 
 
 def get_measurements_context_data(run, page):
@@ -130,20 +123,31 @@ class PlotContextData:
         # Convert to unix timestamp
         time_e = [t.timestamp() for t in time_dt]
 
-        xlim_dt = (
-            run.date_from,
-            run.date_to if run.date_to else run.date_from + timedelta(days=1),
-        )
+        # Calculate x-axis limits
+        if run.date_to:
+            xlim_to = run.date_to
+        else:
+            current_time = datetime.now(settings.LOCAL_TIMEZONE)
+            if current_time < run.date_from:
+                xlim_to = run.date_from + timedelta(days=1)
+            else:
+                xlim_to = current_time
+        xlim_dt = (run.date_from, xlim_to)
 
         xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
         xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
         xticklabels = self._calculate_xticklabels(xticks_dt)
 
+        titles = [
+            f'''#{idx}: {t.strftime('%Y-%m-%d %H:%M:%S')}'''
+            for idx, t in enumerate(time_dt, 1)
+        ]
+
         # Return data
         return {
             'labels': device.columns,
             'time': time_e,
-            'time_fmt': [t.strftime('%Y-%m-%d %H:%M:%S') for t in time_dt],
+            'titles': titles,
             'data': data,
             'xlimits': xlim_e,
             'xticks': xticks_e,
@@ -183,7 +187,7 @@ class RunFinaliseView(View):
     def get_success_url(self):
         return reverse_lazy('runs:run', kwargs=self.kwargs)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         run = self.object = self.get_object()
         if run.date_to:
             raise RuntimeError('Run already finalised')
@@ -207,7 +211,7 @@ class RunDownloadDataView(View):
     def get_object(self):
         return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
 
-    def post(self, request, *args, **kwargs):
+    def get(self, *args, **kwargs):
         run = self.get_object()
         device = run.device
         clean_device_name = re.sub('[^\w]', '_', run.device.name)
@@ -236,7 +240,7 @@ class RunDeleteRunDetachDataView(View):
     def get_success_url(self):
         return reverse_lazy('devices:device', kwargs={'d_sid': self.object.device.sequence_id})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         with transaction.atomic():
             run = self.object = self.get_object()
 
@@ -259,7 +263,7 @@ class RunDeleteRunAndDataView(View):
     def get_success_url(self):
         return reverse_lazy('devices:device', kwargs={'d_sid': self.object.device.sequence_id})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         with transaction.atomic():
             run = self.object = self.get_object()
 
@@ -279,7 +283,7 @@ class PaginationMeasurementsView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.is_ajax():
-            raise RuntimeError('Ajax request expected')
+            raise PermissionDenied('Ajax request expected')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, r_id, page, **kwargs):
