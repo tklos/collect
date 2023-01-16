@@ -45,13 +45,13 @@
 		</tr>
 		<tr>
 			<td><label>Date from:</label></td>
-			<td>{{object.date_from}}</td>
+			<td>{{object.get_date_from_display}}</td>
 		</tr>
 		<tr>
 			<td><label>Date to:</label></td>
 			<td>
 				<table><tr>
-					<td>{{object.date_to|default_if_none:"current"}}</td>
+					<td>{{object.get_date_to_display}}</td>
 					{% if not object.date_to %}
 						<td>
 							<form method="post" id="form-delete-data" action="{% url 'runs:finalise' r_id=run.pk %}">

@@ -196,9 +196,9 @@ class RunFinaliseView(View):
         run.date_to = Now()
         run.save()
 
-        # Remove microseconds
+        # Set end to the next minute
         run.refresh_from_db()
-        run.date_to = run.date_to.replace(microsecond=0)
+        run.date_to = run.date_to.replace(second=0, microsecond=0) + timedelta(minutes=1)
         run.save()
 
         messages.success(self.request, f'Run {run.name} finalised')
@@ -342,7 +342,7 @@ class RunAddView(ABC, CreateView):
         run = self.object
         qs = device.measurement_set.filter(date_added__gte=date_from)
         if date_to:
-            qs = qs.filter(date_added__lt=date_to+timedelta(seconds=1))
+            qs = qs.filter(date_added__lt=date_to)
         num_assigned = qs.update(run=run)
 
         msg = f'Run "{name}" added. {num_assigned} measurements assigned.<br/>'

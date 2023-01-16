@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, transaction
 from django.db.models import JSONField, Max
@@ -62,7 +65,9 @@ class Device(models.Model):
 
         qs = self.measurement_set.order_by('date_added')
         first, last = qs[0], qs.reverse()[0]
-        return f'{first.date_added:%Y-%m-%d %H:%M:%S} &mdash; {last.date_added:%Y-%m-%d %H:%M:%S}'
+        first_dt, last_dt = first.date_added, last.date_added + timedelta(minutes=1)
+
+        return f'{first_dt.astimezone(settings.LOCAL_TIMEZONE):%Y-%m-%d %H:%M} &mdash; {last_dt.astimezone(settings.LOCAL_TIMEZONE):%Y-%m-%d %H:%M}'
 
     def is_matching_api_key(self, api_key):
         return calculate_hash(api_key, self.salt) == self.api_key_hash

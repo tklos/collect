@@ -21,9 +21,9 @@ class RunAdmin(admin.ModelAdmin):
         'device__user',
     )
     ordering = ('date_from',)
-    inlines = (
-        MeasurementInline,
-    )
+    # inlines = (
+    #     MeasurementInline,
+    # )
 
     def get_str(self, obj):
         return str(obj)
