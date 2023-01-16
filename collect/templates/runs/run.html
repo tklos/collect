@@ -115,7 +115,12 @@
 	</div>
 
 
-{% if object.device.has_map %}
+{% if not object.device.has_map %}
+	<h2>Plot</h2>
+		<canvas id="measurements_plot"></canvas>
+		<input type="hidden" id="get-initial-plot-data-url" value="{% url 'runs:get-initial-plot-data' r_id=object.pk %}"/>
+
+{% else %}
 	<h2>Map</h2>
 		<div id="map"></div>
 		{{locations_l|json_script:"id-locations-l"}}

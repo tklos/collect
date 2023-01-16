@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:r_id>/download/', login_required(views.RunDownloadDataView.as_view()), name='download'),
     path('<int:r_id>/delete-run-detach-data/', login_required(views.RunDeleteRunDetachDataView.as_view()), name='delete-run-detach-data'),
     path('<int:r_id>/delete-run-and-data/', login_required(views.RunDeleteRunAndDataView.as_view()), name='delete-run-and-data'),
+    path('<int:r_id>/get-initial-plot-data/', login_required(views.RunPlotInitialDataView.as_view()), name='get-initial-plot-data'),
 
     path('<int:r_id>/pagination-measurements/<int:page>/', login_required(views.PaginationMeasurementsView.as_view()), name='pagination-measurements'),
 ]
