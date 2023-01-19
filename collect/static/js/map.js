@@ -1,4 +1,38 @@
 
+var map_div;
+var map;
+var points = [];
+var path;
+var markers = [];
+var show_checkbox;
+var info_window;
+
+
+function append_to_points(locations) {
+    for (var i = 0; i < locations.length; i++)
+        points.push({
+            lat: locations[i][1],
+            lng: locations[i][2],
+        });
+}
+
+
+function append_to_markers(locations, points, current_num_points) {
+    for (var i = 0; i < locations.length; i++) {
+        var marker = new google.maps.Marker({
+            position: points[current_num_points + i],
+            info_window_content: "#" + locations[i][0] + ": " + locations[i][3],
+            map: null,
+        })
+        marker.addListener("click", function() {
+            info_window.setContent(this.info_window_content);
+            info_window.open(map, this);
+        });
+        markers.push(marker);
+    }
+}
+
+
 function calculate_map_bounds(points) {
     var bounds = new google.maps.LatLngBounds();
     for (var i = 0; i < points.length; i++)
@@ -11,7 +45,7 @@ function calculate_map_bounds(points) {
 /* Taken from https://stackoverflow.com/a/13274361 */
 function calculate_map_zoom(bounds, map_height, map_width) {
     var WORLD_DIM = {height: 256, width: 256};
-    var ZOOM_MAX = 21;
+    var ZOOM_MAX = 18;
 
     function latRad(lat) {
         var sin = Math.sin(lat * Math.PI / 180);
@@ -38,20 +72,15 @@ function calculate_map_zoom(bounds, map_height, map_width) {
 }
 
 
-function initMap() {
+function init_map() {
     /* Locations */
     var locations = JSON.parse(document.getElementById("id-locations-l").textContent);
 
     /* Points */
-    var points = [];
-    for (var i = 0; i < locations.length; i++)
-        points.push({
-            lat: locations[i][1],
-            lng: locations[i][2],
-        });
+    append_to_points(locations);
 
     /* Map */
-    var map_div = document.getElementById("map");
+    map_div = document.getElementById("map");
     var map_bounds = points.length > 0 ? calculate_map_bounds(points) : null;
     map = new google.maps.Map(map_div, {
         center: map_bounds ? map_bounds.getCenter() : new google.maps.LatLng(0, 0),
@@ -59,7 +88,7 @@ function initMap() {
     });
 
     /* Path */
-    var path = new google.maps.Polyline({
+    path = new google.maps.Polyline({
         path: points,
         strokeColor: "#000000",
         strokeOpacity: 1.0,
@@ -67,30 +96,18 @@ function initMap() {
         map: map,
     });
 
-    /* Markers */
-    var markers = [];
-    for (var i = 0; i < locations.length; i++)
-        markers.push(
-            new google.maps.Marker({
-                position: points[i],
-                info_window_content: "#" + locations[i][0] + ": " + locations[i][3],
-                map: null,
-            })
-        );
-    if (markers.length >= 2) {
-        markers[0].setLabel("S");
-        markers[markers.length-1].setLabel("E");
-        markers[0].setMap(map);
-        markers[markers.length-1].setMap(map);
-    }
-
     /* Info window */
-    var info_window = new google.maps.InfoWindow();
-    for (var i = 0; i < locations.length; i++) {
-        markers[i].addListener("click", function() {
-            info_window.setContent(this.info_window_content);
-            info_window.open(map, this);
-        });
+    info_window = new google.maps.InfoWindow();
+
+    /* Markers */
+    append_to_markers(locations, points, 0);
+    if (markers.length >= 1) {
+        markers[0].setLabel("S");
+        markers[0].setMap(map);
+    }
+    if (markers.length >= 2) {
+        markers[markers.length-1].setMap(map);
+        markers[markers.length-1].setLabel("E");
     }
 
     /* Show markers panel */
@@ -115,11 +132,11 @@ function initMap() {
     map_panel_inner.style.lineHeight = "39px";
     map_panel_inner.innerHTML = '<input type="checkbox" id="map-checkbox"> Show markers';
     map_panel_inner.addEventListener("click", function(event) {
-        var checkbox = document.getElementById("map-checkbox");
-        if (event.target != checkbox)
-            checkbox.checked = !checkbox.checked;
+        var show_checkbox = document.getElementById("map-checkbox");
+        if (event.target != show_checkbox)
+            show_checkbox.checked = !show_checkbox.checked;
 
-        var new_map = checkbox.checked ? map : null;
+        var new_map = show_checkbox.checked ? map : null;
         for (var i = 1; i < markers.length-1; i++)
             markers[i].setMap(new_map);
         info_window.close();
@@ -128,5 +145,43 @@ function initMap() {
     map_panel.appendChild(map_panel_inner);
 
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(map_panel);
+}
+
+
+function update_map(locations) {
+    var current_num_points = points.length;
+
+    append_to_points(locations);
+
+    /* Update center and zoom */
+    var map_bounds = calculate_map_bounds(points);
+    map.setCenter(map_bounds.getCenter());
+    map.setZoom(calculate_map_zoom(map_bounds, map_div.clientHeight, map_div.clientWidth));
+
+    /* Update path */
+    path.setPath(points);
+
+    append_to_markers(locations, points, current_num_points);
+
+    /* Update markers */
+    /* Add start marker if we didn't have one */
+    if (current_num_points == 0 && markers.length >= 1) {
+        markers[0].setLabel("S");
+        markers[0].setMap(map);
+    }
+    /* Remove previous end marker */
+    if (current_num_points >= 2) {
+        markers[current_num_points-1].setLabel();
+    }
+    /* Add end marker */
+    if (markers.length >= 2) {
+        markers[markers.length-1].setLabel("E");
+        markers[markers.length-1].setMap(map);
+    }
+
+    var show_checkbox = document.getElementById("map-checkbox");
+    var new_map = show_checkbox.checked ? map : null;
+    for (var i = 1; i < markers.length-1; i++)
+        markers[i].setMap(new_map);
 }
 

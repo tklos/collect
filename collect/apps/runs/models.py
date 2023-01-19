@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.db import models
 from django.utils.functional import cached_property
@@ -26,6 +28,10 @@ class Run(models.Model):
     @cached_property
     def num_measurements(self):
         return self.measurement_set.count()
+
+    @property
+    def needs_updating(self):
+        return not self.date_to or datetime.now(settings.LOCAL_TIMEZONE) <= self.date_to
 
     def __str__(self):
         return 'Run for device {}: "{}": {} \u2014 {}'.format(

@@ -11,8 +11,8 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models.functions import Now
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
@@ -21,8 +21,16 @@ from devices.models import Device
 from .models import Run
 
 
+EARLIEST_DATE = datetime(2000, 1, 1, tzinfo=settings.LOCAL_TIMEZONE)
+
+
 def get_measurements_context_data(run, page):
-    measurements = run.measurement_set.order_by('-date_added').all()
+    measurements = (
+        run
+        .measurement_set
+        .order_by('-date_added')
+        .all()
+    )
 
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)
@@ -38,12 +46,16 @@ def get_measurements_context_data(run, page):
     }
 
 
-def get_map_context_data(run):
+def get_map_context_data(run, queryset=None, start_idx=None):
     lat_idx, lon_idx = run.device.columns.index('lat'), run.device.columns.index('lon')
+
+    if queryset is None:
+        queryset = run.measurement_set.order_by('date_added').all()
+        start_idx = 1
 
     locations = [
         (idx, m.data[lat_idx], m.data[lon_idx], m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'))
-        for idx, m in enumerate(run.measurement_set.order_by('date_added').all(), 1)
+        for idx, m in enumerate(queryset, start_idx)
     ]
 
     return {
@@ -64,6 +76,62 @@ class PlotContextData:
     def __init__(self, run, *args, **kwargs):
         self.run = run
         super().__init__(*args, **kwargs)
+
+    def get_plot_context_data(self, measurements=None, start_idx=None):
+        run = self.run
+        device = run.device
+        columns = device.columns
+        if measurements is None:
+            measurements = run.measurement_set.order_by('date_added').all()
+            start_idx = 1
+
+        # Process measurements
+        time_dt, data = [], [[] for _ in range(len(columns))]
+        for measurement in measurements:
+            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
+            for idx, value in enumerate(measurement.data):
+                data[idx].append(value)
+
+        # Convert to unix timestamp
+        time_e = [t.timestamp() for t in time_dt]
+
+        # Calculate x-axis limits
+        xlim_dt = self._calculate_xaxis_limits()
+
+        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        titles = [
+            f'''#{start_idx+idx}: {t.strftime('%Y-%m-%d %H:%M:%S')}'''
+            for idx, t in enumerate(time_dt)
+        ]
+
+        # Return data
+        return {
+            'labels': columns,
+            'time': time_e,
+            'titles': titles,
+            'data': data,
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
+        }
+
+    def get_plot_xaxis_context_data(self):
+        run = self.run
+
+        xlim_dt = self._calculate_xaxis_limits()
+
+        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        return {
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
+        }
 
     def _calculate_xticks(self, begin_dt, end_dt):
         """Calculate x-axis ticks for the limits of [begin_dt, end_dt].
@@ -107,23 +175,8 @@ class PlotContextData:
 
         return labels
 
-    def get_plot_context_data(self):
+    def _calculate_xaxis_limits(self):
         run = self.run
-        device = run.device
-        columns = device.columns
-        measurements = run.measurement_set.order_by('date_added').all()
-
-        # Process measurements
-        time_dt, data = [], [[] for _ in range(len(columns))]
-        for measurement in measurements:
-            time_dt.append(measurement.date_added.astimezone(settings.LOCAL_TIMEZONE))
-            for idx, value in enumerate(measurement.data):
-                data[idx].append(value)
-
-        # Convert to unix timestamp
-        time_e = [t.timestamp() for t in time_dt]
-
-        # Calculate x-axis limits
         if run.date_to:
             xlim_to = run.date_to
         else:
@@ -131,28 +184,27 @@ class PlotContextData:
             if current_time < run.date_from:
                 xlim_to = run.date_from + timedelta(days=1)
             else:
-                xlim_to = current_time
-        xlim_dt = (run.date_from, xlim_to)
+                xlim_to = self._get_following_minute(current_time)
 
-        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
-        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
-        xticklabels = self._calculate_xticklabels(xticks_dt)
+        return run.date_from, xlim_to
 
-        titles = [
-            f'''#{idx}: {t.strftime('%Y-%m-%d %H:%M:%S')}'''
-            for idx, t in enumerate(time_dt, 1)
-        ]
+    @staticmethod
+    def _get_following_minute(d):
+        following_minute = d.replace(second=0, microsecond=0)
+        following_minute += timedelta(minutes=1)
+        return following_minute
 
-        # Return data
-        return {
-            'labels': device.columns,
-            'time': time_e,
-            'titles': titles,
-            'data': data,
-            'xlimits': xlim_e,
-            'xticks': xticks_e,
-            'xticklabels': xticklabels,
-        }
+
+def get_newest_data_context_data(run, last_record_dt):
+    last_record_e = last_record_dt.timestamp() if last_record_dt else None
+
+    return {
+        'needs_updating': run.needs_updating,
+        'url': reverse('runs:get-newest-data', kwargs={'r_id': run.pk}),
+        'has_plot': run.device.has_plot,
+        'has_map': run.device.has_map,
+        'last_record_time': last_record_e,
+    }
 
 
 class RunView(DetailView):
@@ -175,6 +227,9 @@ class RunView(DetailView):
         if self.object.device.has_map:
             map_context = get_map_context_data(self.object)
             context.update(**map_context)
+
+        last_record_dt = m_context['measurements_page'][0].date_added if m_context['measurements_page'] else EARLIEST_DATE
+        context['get_newest_data'] = get_newest_data_context_data(self.object, last_record_dt)
 
         return context
 
@@ -276,6 +331,66 @@ class RunDeleteRunAndDataView(View):
         messages.success(self.request, f'Run {run.name} and its {num_deleted} records deleted')
 
         return redirect(self.get_success_url())
+
+
+class RunNewestDataView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get(self, request, *args, **kwargs):
+        run = self.get_object()
+
+        try:
+            last_record_e = int(float(request.GET['last_record_time'])) + 1
+        except KeyError:
+            return JsonResponse({'status': 'error'}, status=500)
+
+        last_record = datetime.fromtimestamp(last_record_e, settings.LOCAL_TIMEZONE)
+
+        # Get all new measurements
+        new_measurements = list(
+            run
+            .measurement_set
+            .filter(date_added__gte=last_record)
+            .order_by('date_added')
+            .all()
+        )
+
+        any_new = bool(len(new_measurements))
+        if not any_new:
+            data = {
+                'any_new': any_new,
+            }
+            if run.device.has_plot:
+                ctx = PlotContextData(run).get_plot_xaxis_context_data()
+                data['plot_ctx'] = ctx
+            return JsonResponse(data)
+
+        # Process new measurements
+        num_measurements = len(run.measurement_set.all())
+        last_record_e = new_measurements[-1].date_added.timestamp()
+
+        m_context = get_measurements_context_data(run, 1)
+        m_context['run'] = run
+        response = render(request, 'runs/run_measurements.html', m_context)
+
+        data = {
+            'any_new': any_new,
+            'num_measurements': num_measurements,
+            'last_record_time': last_record_e,
+            'measurements_table_html': response.content.decode(),
+        }
+
+        if run.device.has_map:
+            ctx = get_map_context_data(run, queryset=new_measurements, start_idx=num_measurements-len(new_measurements)+1)
+            data['map_ctx'] = ctx
+
+        if run.device.has_plot:
+            ctx = PlotContextData(run).get_plot_context_data(measurements=new_measurements, start_idx=num_measurements-len(new_measurements)+1)
+            data['plot_ctx'] = ctx
+
+        return JsonResponse(data)
 
 
 class PaginationMeasurementsView(TemplateView):

@@ -1,9 +1,17 @@
 
+var config;
+var plot;
+
+
 const COLOURS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
 
 
 $(document).ready(function() {
-	var data = JSON.parse(document.getElementById("id-plot-data").textContent);
+	var plot_obj = document.getElementById("id-plot-data");
+	if (plot_obj === null)
+		return;
+
+	var data = JSON.parse(plot_obj.textContent);
 
 	/* Prepare datasets */
 	var datasets = [];
@@ -26,8 +34,7 @@ $(document).ready(function() {
 		datasets.push(dataset);
 	}
 
-	var ctx = $("#measurements_plot");
-	var config = {
+	config = {
 		type: "line",
 		data: {
 			labels: data.time,
@@ -88,6 +95,37 @@ $(document).ready(function() {
 		},
 	}
 
-	var plot = new Chart(ctx, config);
+	var chart_el = $("#measurements_plot");
+
+	plot = new Chart(chart_el, config);
 });
+
+
+function update_plot(ctx) {
+	/* Update data */
+	for (t of ctx.titles)
+			config.data.titles.push(t);
+
+	for (var idx = 0; idx < config.data.datasets.length; idx++) {
+			var dataset_data = config.data.datasets[idx].data;
+			for (var time_idx = 0; time_idx < ctx.time.length; time_idx++)
+					dataset_data.push({x: ctx.time[time_idx], y: ctx.data[idx][time_idx]});
+	}
+
+	/* Update x axis */
+	config.data.xlimits = ctx.xlimits;
+	config.data.xticks = ctx.xticks;
+	config.data.xticklabels = ctx.xticklabels;
+
+	plot.update();
+}
+
+
+function update_plot_xaxis(ctx) {
+	config.data.xlimits = ctx.xlimits;
+	config.data.xticks = ctx.xticks;
+	config.data.xticklabels = ctx.xticklabels;
+
+	plot.update();
+}
 
