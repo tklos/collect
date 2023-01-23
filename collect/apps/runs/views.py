@@ -6,7 +6,7 @@ from datetime import timedelta, timezone, datetime
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models.functions import Now
@@ -257,6 +257,39 @@ class RunFinaliseView(View):
         run.save()
 
         messages.success(self.request, f'Run {run.name} finalised')
+
+        return redirect(self.get_success_url())
+
+
+class RunTrimView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get_success_url(self):
+        return reverse_lazy('runs:run', kwargs=self.kwargs)
+
+    def post(self, *args, **kwargs):
+        run = self.object = self.get_object()
+
+        qs = run.measurement_set.order_by('date_added')
+        if not qs:
+            raise SuspiciousOperation('No measurements anymore')
+
+        first, last = qs[0], qs.reverse()[0]
+        first_dt, last_dt = first.date_added, last.date_added
+        first_minute_dt = first_dt.replace(second=0, microsecond=0)
+        last_minute_dt = last_dt.replace(second=0, microsecond=0) + timedelta(minutes=1)
+
+        # Save
+        run.date_from = first_minute_dt
+        run.date_to = last_minute_dt
+        run.save()
+
+        first_minute_s = first_minute_dt.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M')
+        last_minute_s = last_minute_dt.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M')
+
+        messages.success(self.request, f'Run {run.name} trimmed to {first_minute_s} -- {last_minute_s}')
 
         return redirect(self.get_success_url())
 

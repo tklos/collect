@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import models
@@ -28,6 +28,21 @@ class Run(models.Model):
     @cached_property
     def num_measurements(self):
         return self.measurement_set.count()
+
+    def can_be_trimmed(self):
+        if not self.date_to:
+            return False
+
+        qs = self.measurement_set.order_by('date_added')
+        if not qs:
+            return False
+
+        first, last = qs[0], qs.reverse()[0]
+        first_dt, last_dt = first.date_added, last.date_added
+        first_minute_dt = first_dt.replace(second=0, microsecond=0)
+        last_minute_dt = last_dt.replace(second=0, microsecond=0) + timedelta(minutes=1)
+
+        return first_minute_dt != self.date_from or last_minute_dt != self.date_to
 
     @property
     def needs_updating(self):
