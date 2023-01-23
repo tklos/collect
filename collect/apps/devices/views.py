@@ -6,13 +6,16 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
+from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
 
 import runs.views
+from measurements.models import Measurement
 from runs.functions import time_to_next_display
 
 from .models import Device
@@ -93,6 +96,40 @@ class DeviceView(DetailView):
         context.update(**r_context, **m_context)
 
         return context
+
+
+class DeviceDeleteDeviceView(View):
+    success_url = reverse_lazy('profile:home')
+
+    def get_object(self):
+        return get_object_or_404(Device.objects, user=self.request.user, sequence_id=self.kwargs['d_sid'])
+
+    def post(self, *args, **kwargs):
+        with transaction.atomic():
+            device = self.object = self.get_object()
+
+            # Delete measurements
+            num_measurements_deleted, _ = (
+                device
+                .measurement_set
+                .all()
+                .delete()
+            )
+
+            # Delete runs
+            num_runs_deleted, _ = (
+                device
+                .run_set
+                .all()
+                .delete()
+            )
+
+            # Delete device
+            device.delete()
+
+        messages.success(self.request, f'Device {device.name}, its {num_runs_deleted} runs and {num_measurements_deleted} measurements deleted')
+
+        return redirect(self.success_url)
 
 
 class PaginationUnassignedMeasurementsView(TemplateView):

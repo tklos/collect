@@ -34,6 +34,15 @@
 	</table>
 
 
+<h2>Delete device</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show data panel" data-hide-msg="Hide data panel">Show delete panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		{% include "devices/device_delete_device.html" with device=object csrf_token=csrf_token only %}
+	</div>
+
+
 <h2>Runs</h2>
 	<table class="table table-bordered table-condensed no-margin-bottom table-td-vertical-align-middle">
 		<tr><th>Name</th><th>Time range</th><th>Num meas.</th><th class="width-1px">Action</th></tr>
