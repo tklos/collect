@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from django.views.generic import TemplateView, CreateView, DetailView
 
 import runs.views
+from runs.functions import time_to_next_display
 
 from .models import Device
 from .forms import RunAddForm
@@ -30,13 +31,47 @@ def get_runs_context_data(device):
 
 
 def get_unassigned_measurements_context_data(device, page):
-    measurements = device.unassigned_measurements.order_by('-date_added').all()
+    measurements = (
+        device
+        .unassigned_measurements
+        .order_by('-date_added')
+    )
 
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)
 
+    if not measurements_paginator.count:
+        return {
+            'measurements_page': measurements_page,
+            'measurements_l': [],
+            'measurements_extra': {
+                'd_sid': device.sequence_id
+            },
+        }
+
+    # Index of the first/last record in the `measurements` list
+    idx1, idx2 = measurements_page.start_index() - 1, measurements_page.end_index() - 1
+    if page == 1:
+        s_idx, e_idx = idx1 + 1, idx2 + 1
+    else:
+        s_idx, e_idx = idx1, idx2 + 1
+
+    time_to_next = [
+        time_to_next_display(next_.date_added, this.date_added)
+        for this, next_ in zip(
+            measurements[s_idx:e_idx],
+            measurements[s_idx-1:e_idx-1],
+        )
+    ]
+    if page == 1:
+        time_to_next.insert(0, '-')
+
     return {
         'measurements_page': measurements_page,
+        'measurements_l': zip(
+            measurements_page,
+            time_to_next,
+        ),
         'measurements_extra': {
             'd_sid': device.sequence_id
         },

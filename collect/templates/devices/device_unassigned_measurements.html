@@ -8,14 +8,16 @@
 		{% for column in device.columns %}
 			<th>{{column}}</th>
 		{% endfor %}
+		<th>Time to next</th>
 		<th class="width-1px">Action</th>
 	</tr>
-	{% for m in measurements_page %}
+	{% for m, t in measurements_l %}
 		<tr>
 			<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
 			{% for value in m.data %}
 				<td>{{value}}</td>
 			{% endfor %}
+			<td>{{t}}</td>
 			<td><a class="measurement-delete-link" data-url="{% url 'measurements:delete' m_id=m.id %}" data-csrftoken="{{csrf_token}}" href="#">Delete</a></td>
 		</tr>
 	{% endfor %}

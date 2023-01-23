@@ -1,4 +1,5 @@
 import csv
+import itertools
 import math
 import re
 from abc import ABC, abstractmethod
@@ -18,6 +19,7 @@ from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
 
 from devices.models import Device
+from .functions import distance, time_to_next_display
 from .models import Run
 
 
@@ -35,11 +37,57 @@ def get_measurements_context_data(run, page, measurements=None):
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)
 
+    if not measurements_paginator.count:
+        return {
+            'measurements_page': measurements_page,
+            'measurements_l': [],
+            'measurements_extra': {
+                'r_id': run.pk,
+            },
+        }
+
+    # Display index of the first record in the measurements table
     start_idx = measurements_paginator.count - measurements_page.start_index() + 1
+
+    # Index of the first/last record in the `measurements` list
+    idx1, idx2 = measurements_page.start_index() - 1, measurements_page.end_index() - 1
+    if page == 1:
+        s_idx, e_idx = idx1 + 1, idx2 + 1
+    else:
+        s_idx, e_idx = idx1, idx2 + 1
+
+    time_to_next = [
+        time_to_next_display(next_.date_added, this.date_added)
+        for this, next_ in zip(
+            measurements[s_idx:e_idx],
+            measurements[s_idx-1:e_idx-1],
+        )
+    ]
+    if page == 1:
+        time_to_next.insert(0, '-')
+
+    if run.device.has_map:
+        lat_idx, lon_idx = run.device.columns.index('lat'), run.device.columns.index('lon')
+        dist_to_next = [
+            distance(this.data[lat_idx], this.data[lon_idx], next_.data[lat_idx], next_.data[lon_idx])
+            for this, next_ in zip(
+                measurements[s_idx:e_idx],
+                measurements[s_idx-1:e_idx-1],
+            )
+        ]
+        if page == 1:
+            dist_to_next.insert(0, '-')
+    else:
+        dist_to_next = itertools.repeat(None)
 
     return {
         'measurements_page': measurements_page,
-        'measurements_l': zip(range(start_idx, start_idx-settings.MEASUREMENTS_PAGINATE_BY, -1), measurements_page),
+        'measurements_l': zip(
+            range(start_idx, start_idx-settings.MEASUREMENTS_PAGINATE_BY, -1),
+            measurements_page,
+            time_to_next,
+            dist_to_next,
+        ),
         'measurements_extra': {
             'r_id': run.pk,
         },
@@ -58,7 +106,12 @@ def get_map_context_data(run, queryset=None, start_idx=None):
         start_idx = 1
 
     locations = [
-        (idx, m.data[lat_idx], m.data[lon_idx], m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'))
+        (
+            idx,
+            m.data[lat_idx],
+            m.data[lon_idx],
+            m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S'),
+        )
         for idx, m in enumerate(queryset, start_idx)
     ]
 

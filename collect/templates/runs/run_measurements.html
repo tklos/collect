@@ -1,4 +1,7 @@
 
+{% load humanize %}
+
+
 {% load common_tags %}
 
 
@@ -11,15 +14,23 @@
 		{% for column in run.device.columns %}
 			<th>{{column}}</th>
 		{% endfor %}
+		<th>Time to next</th>
+		{% if run.device.has_map %}
+			<th> Dist. to next [m]</th>
+		{% endif %}
 		<th class="width-1px">Action</th>
 	</tr>
-	{% for idx, m in measurements_l %}
+	{% for idx, m, t, d in measurements_l %}
 		<tr>
 			<td class="horizontal-align-right">{{idx}}</td>
 			<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
 			{% for value in m.data %}
 				<td>{{value}}</td>
 			{% endfor %}
+			<td>{{t}}</td>
+			{% if run.device.has_map %}
+				<td>{{d|intcomma}}</td>
+			{% endif %}
 			<td><a class="measurement-delete-link" data-url="{% url 'measurements:delete' m_id=m.id %}" data-csrftoken="{{csrf_token}}" href="#">Delete</a></td>
 		</tr>
 	{% endfor %}
