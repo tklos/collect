@@ -82,7 +82,7 @@
 							</form>
 						</td>
 					{% endif %}
-					{% if object.can_be_trimmed %}
+					{% if can_be_trimmed %}
 						<td>
 							<form method="post" id="form-trim-run" action="{% url 'runs:trim' r_id=run.pk %}">
 								{% csrf_token %}
@@ -116,7 +116,7 @@
 		</tr>
 		<tr>
 			<td><label>Num meas.:</label></td>
-			<td><div class="num-measurements">{{object.num_measurements|intcomma}}</div></td>
+			<td><div class="num-measurements">{{num_measurements|intcomma}}</div></td>
 		</tr>
 	</table>
 

@@ -24,13 +24,13 @@ from .models import Run
 EARLIEST_DATE = datetime(2000, 1, 1, tzinfo=settings.LOCAL_TIMEZONE)
 
 
-def get_measurements_context_data(run, page):
-    measurements = (
-        run
-        .measurement_set
-        .order_by('-date_added')
-        .all()
-    )
+def get_measurements_context_data(run, page, measurements=None):
+    if measurements is None:
+        measurements = (
+            run
+            .measurement_set
+            .order_by('-date_added')
+        )
 
     measurements_paginator = Paginator(measurements, settings.MEASUREMENTS_PAGINATE_BY)
     measurements_page = measurements_paginator.get_page(page)
@@ -50,7 +50,11 @@ def get_map_context_data(run, queryset=None, start_idx=None):
     lat_idx, lon_idx = run.device.columns.index('lat'), run.device.columns.index('lon')
 
     if queryset is None:
-        queryset = run.measurement_set.order_by('date_added').all()
+        queryset = (
+            run
+            .measurement_set
+            .order_by('date_added')
+        )
         start_idx = 1
 
     locations = [
@@ -82,7 +86,11 @@ class PlotContextData:
         device = run.device
         columns = device.columns
         if measurements is None:
-            measurements = run.measurement_set.order_by('date_added').all()
+            measurements = (
+                run
+                .measurement_set
+                .order_by('date_added')
+            )
             start_idx = 1
 
         # Process measurements
@@ -216,16 +224,26 @@ class RunView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        m_context = get_measurements_context_data(self.object, 1)
+        measurements = list(
+            self.object
+            .measurement_set
+            .order_by('date_added')
+        )
+        measurements_rev = list(reversed(measurements))
+
+        context['can_be_trimmed'] = self.object.can_be_trimmed(measurements)
+        context['num_measurements'] = len(measurements)
+
+        m_context = get_measurements_context_data(self.object, 1, measurements_rev)
 
         context.update(**m_context)
 
         if self.object.device.has_plot:
-            plot_data = PlotContextData(self.object).get_plot_context_data()
+            plot_data = PlotContextData(self.object).get_plot_context_data(measurements, 1)
             context['plot_data'] = plot_data
 
         if self.object.device.has_map:
-            map_context = get_map_context_data(self.object)
+            map_context = get_map_context_data(self.object, measurements, 1)
             context.update(**map_context)
 
         last_record_dt = m_context['measurements_page'][0].date_added if m_context['measurements_page'] else EARLIEST_DATE
@@ -272,7 +290,11 @@ class RunTrimView(View):
     def post(self, *args, **kwargs):
         run = self.object = self.get_object()
 
-        qs = run.measurement_set.order_by('date_added')
+        qs = (
+            run
+            .measurement_set
+            .order_by('date_added')
+        )
         if not qs:
             raise SuspiciousOperation('No measurements anymore')
 
@@ -302,6 +324,11 @@ class RunDownloadDataView(View):
     def get(self, *args, **kwargs):
         run = self.get_object()
         device = run.device
+        qs = (
+            run
+            .measurement_set
+            .order_by('date_added')
+        )
         clean_device_name = re.sub('[^\w]', '_', run.device.name)
         clean_run_name = re.sub('[^\w]', '_', run.name)
 
@@ -314,7 +341,7 @@ class RunDownloadDataView(View):
         writer.writerow(['Date added'] + device.columns)
 
         # Write data
-        for m in run.measurement_set.order_by('date_added'):
+        for m in qs:
             writer.writerow([m.date_added.astimezone(settings.LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')] + m.data)
 
         return response
@@ -333,7 +360,12 @@ class RunDeleteRunDetachDataView(View):
             run = self.object = self.get_object()
 
             # Detach measurements
-            num_detached = run.measurement_set.all().update(run=None)
+            num_detached = (
+                run
+                .measurement_set
+                .all()
+                .update(run=None)
+            )
 
             # Delete run
             run.delete()
@@ -356,7 +388,12 @@ class RunDeleteRunAndDataView(View):
             run = self.object = self.get_object()
 
             # Delete measurements
-            num_deleted, _ = run.measurement_set.all().delete()
+            num_deleted, _ = (
+                run
+                .measurement_set
+                .all()
+                .delete()
+            )
 
             # Delete run
             run.delete()
@@ -387,7 +424,6 @@ class RunNewestDataView(View):
             .measurement_set
             .filter(date_added__gte=last_record)
             .order_by('date_added')
-            .all()
         )
 
         any_new = bool(len(new_measurements))
@@ -401,12 +437,13 @@ class RunNewestDataView(View):
             return JsonResponse(data)
 
         # Process new measurements
-        num_measurements = len(run.measurement_set.all())
         last_record_e = new_measurements[-1].date_added.timestamp()
 
         m_context = get_measurements_context_data(run, 1)
         m_context['run'] = run
         response = render(request, 'runs/run_measurements.html', m_context)
+
+        num_measurements = run.measurement_set.count()
 
         data = {
             'any_new': any_new,
@@ -462,7 +499,11 @@ class RunAddView(ABC, CreateView):
     MAX_DATETIME = settings.LOCAL_TIMEZONE.localize(datetime(2100, 1, 1))
 
     def _check_that_run_doesnt_overlap(self, device, date_from, date_to):
-        all_runs = device.run_set.all()
+        all_runs = (
+            device
+            .run_set
+            .all()
+        )
         self_date_from, self_date_to = date_from, date_to or self.MAX_DATETIME
         for run in all_runs:
             date_from, date_to = run.date_from, run.date_to or self.MAX_DATETIME

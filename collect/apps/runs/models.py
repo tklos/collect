@@ -29,15 +29,27 @@ class Run(models.Model):
     def num_measurements(self):
         return self.measurement_set.count()
 
-    def can_be_trimmed(self):
+    def can_be_trimmed(self, measurements=None):
+        """Is there any data gap at the beginning or end of the run timerange?
+
+        Parameters:
+            measurements: list of Measurement or None
+
+        Returns: bool
+        """
         if not self.date_to:
             return False
 
-        qs = self.measurement_set.order_by('date_added')
-        if not qs:
-            return False
+        if measurements is None:
+            qs = self.measurement_set.order_by('date_added')
+            if not qs:
+                return False
+            first, last = qs[0], qs.reverse()[0]
+        else:
+            if not measurements:
+                return False
+            first, last = measurements[0], measurements[-1]
 
-        first, last = qs[0], qs.reverse()[0]
         first_dt, last_dt = first.date_added, last.date_added
         first_minute_dt = first_dt.replace(second=0, microsecond=0)
         last_minute_dt = last_dt.replace(second=0, microsecond=0) + timedelta(minutes=1)
