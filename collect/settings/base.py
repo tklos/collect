@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
-import pytz
 import sys
 
+import pytz
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -151,5 +151,5 @@ LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
 # Pagination
-MEASUREMENTS_PAGINATE_BY = 30
+MEASUREMENTS_PAGINATE_BY = 20
 

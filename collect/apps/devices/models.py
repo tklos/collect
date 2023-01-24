@@ -7,8 +7,8 @@ from django.db.models import JSONField, Max
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 
-from .functions import calculate_hash
 from . import const
+from .functions import calculate_hash
 
 
 class Device(models.Model):

@@ -20,9 +20,9 @@ def distance(lat1, lon1, lat2, lon2):
 
 
 def time_to_next_display(next_, this):
-    """Return difference between the two dates to be displayed in the measurements table.
+    """Calculate time difference between the two dates to be displayed in the measurements table.
 
-    Paramters:
+    Parameters:
         next_, this: datetime
 
     Returns: str

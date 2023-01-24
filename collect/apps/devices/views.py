@@ -1,5 +1,5 @@
-import string
 import random
+import string
 from abc import ABC, abstractmethod
 
 from django.conf import settings
@@ -15,20 +15,23 @@ from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
 
 import runs.views
-from measurements.models import Measurement
 from runs.functions import time_to_next_display
 
-from .models import Device
+from . import const
 from .forms import RunAddForm
 from .functions import calculate_hash
-from . import const
+from .models import Device
 
 
 def get_runs_context_data(device):
-    runs = device.run_set.order_by('-date_from').all()
+    runs_l = (
+        device
+        .run_set
+        .order_by('-date_from')
+    )
 
     return {
-        'runs': runs,
+        'runs': runs_l,
         'run_add_form': RunAddForm(),
     }
 
@@ -48,11 +51,11 @@ def get_unassigned_measurements_context_data(device, page):
             'measurements_page': measurements_page,
             'measurements_l': [],
             'measurements_extra': {
-                'd_sid': device.sequence_id
+                'd_sid': device.sequence_id,
             },
         }
 
-    # Index of the first/last record in the `measurements` list
+    # Index of the first/last record in the `measurements` queryset
     idx1, idx2 = measurements_page.start_index() - 1, measurements_page.end_index() - 1
     if page == 1:
         s_idx, e_idx = idx1 + 1, idx2 + 1
@@ -76,7 +79,7 @@ def get_unassigned_measurements_context_data(device, page):
             time_to_next,
         ),
         'measurements_extra': {
-            'd_sid': device.sequence_id
+            'd_sid': device.sequence_id,
         },
     }
 

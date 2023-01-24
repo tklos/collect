@@ -1,5 +1,5 @@
 
-<form method="post" id="form-delete-data" action="{% url 'runs:delete-run-detach-data' r_id=run.pk %}">
+<form method="post" action="{% url 'runs:delete-run-detach-data' r_id=run.pk %}">
 	{% csrf_token %}
 
 	<button type="button" class="btn btn-warning margin-bottom-10px" data-toggle="modal" data-target="#delete-run-detach-data-modal">

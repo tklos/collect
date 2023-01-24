@@ -1,7 +1,7 @@
 from django.contrib import admin
-from django.db.models.functions import Lower
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.models import Group
+from django.db.models.functions import Lower
 
 from .models import User
 

@@ -3,7 +3,7 @@ import itertools
 import math
 import re
 from abc import ABC, abstractmethod
-from datetime import timedelta, timezone, datetime
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,14 +11,15 @@ from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models.functions import Now
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views import View
-from django.views.generic import TemplateView, CreateView, DetailView
+from django.views.generic import CreateView, DetailView, TemplateView
 
 from devices.models import Device
+
 from .functions import distance, time_to_next_display
 from .models import Run
 
@@ -49,7 +50,7 @@ def get_measurements_context_data(run, page, measurements=None):
     # Display index of the first record in the measurements table
     start_idx = measurements_paginator.count - measurements_page.start_index() + 1
 
-    # Index of the first/last record in the `measurements` list
+    # Index of the first/last record in the `measurements` queryset/list
     idx1, idx2 = measurements_page.start_index() - 1, measurements_page.end_index() - 1
     if page == 1:
         s_idx, e_idx = idx1 + 1, idx2 + 1
@@ -423,7 +424,7 @@ class RunDeleteRunDetachDataView(View):
             # Delete run
             run.delete()
 
-        messages.success(self.request, f'Run {run.name} daleted; its {num_detached} records are now unassigned')
+        messages.success(self.request, f'Run {run.name} deleted; its {num_detached} records are now unassigned')
 
         return redirect(self.get_success_url())
 
