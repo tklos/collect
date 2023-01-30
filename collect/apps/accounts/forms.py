@@ -1,6 +1,6 @@
-from django import forms
 import django.contrib.auth.forms as auth_forms
-from django.contrib.auth import password_validation, get_user_model
+from django import forms
+from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 

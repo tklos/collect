@@ -7,8 +7,8 @@ API key can be specified in:
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import Device
 from . import const
+from .models import Device
 
 
 class ApiKeyAuthentication(BaseAuthentication):

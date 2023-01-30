@@ -1,19 +1,15 @@
 {% extends "common/base.html" %}
 
 {% load static %}
-
-
-{% block head-extra %}
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
-{% endblock %}
-{% block head-extra-2 %}
-	{% with static_version=100 %}
-		<script src="{% static 'js/plot.js' %}?v={{static_version}}"></script>
-	{% endwith %}
-{% endblock %}
+{% load humanize %}
 
 
 {% block title %}Device {{object.name}}{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url 'devices:device' d_sid=object.sequence_id %}">Device {{object.name}}</a></li>
+{% endblock %}
 
 
 {% load common_tags %}
@@ -21,40 +17,60 @@
 
 {% block content %}
 
-<input type="hidden" id="get-initial-plot-data-url" value="{% url 'devices:get-initial-plot-data' d_sid=object.sequence_id %}"/>
-<input type="hidden" id="get-newest-plot-data-url" value="{% url 'devices:get-newest-plot-data' d_sid=object.sequence_id %}"/>
+
+<h1>Device {{object.name}}</h1>
 
 
-<h1>Device {{object.name}} &nbsp;&nbsp;&nbsp; (token: <span class="monospace">{{object.token}}</span>)</h1>
+<h2>Details</h2>
+	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
+		<tr>
+			<td><label>Token:</label></td>
+			<td><span class="monospace">{{object.token}}</span></td>
+		</tr>
+		<tr>
+			<td><label>Columns:</label></td>
+			<td>{{object.columns|join:", "}}</td>
+		</tr>
+	</table>
 
 
-<h2>Download data</h2>
-	<div id="div-download" class="div-download">
-		{% include "devices/device_download.html" with device=object form=download_form csrf_token=csrf_token only %}
+<h2>Delete device</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show data panel" data-hide-msg="Hide data panel">Show delete panel</button>
 	</div>
-
-
-<h2>Delete data</h2>
-	<div class="delete-link">
-		<button type="button" class="btn btn-link btn-show-hide-data-delete-panel">Show delete panel</button>
-	</div>
-	<div class="div-delete display-none">
-		{% include "devices/device_delete_data.html" with device=object form=delete_data_form csrf_token=csrf_token only %}
-		{% include "devices/device_delete_data_all.html" with device=object csrf_token=csrf_token only %}
+	<div class="div-show-hide-panel display-none">
 		{% include "devices/device_delete_device.html" with device=object csrf_token=csrf_token only %}
 	</div>
 
 
-<h2>Data</h2>
-	<div class="delete-link">
-		<button type="button" class="btn btn-link btn-show-hide-data-panel">Show data panel</button>
+<h2>Runs</h2>
+	<table class="table table-bordered table-condensed no-margin-bottom table-td-vertical-align-middle">
+		<tr><th>Name</th><th>Time range</th><th>Num meas.</th><th class="width-1px">Action</th></tr>
+		{% for r in runs %}
+			<tr>
+				<td>{{r.name}}</td>
+				<td>{{r.get_time_range_display|safe}}</td>
+				<td>{{r.num_measurements|default:""|intcomma}}</td>
+				<td><a class="btn btn-primary btn-padding-tb-sm" href="{% url 'runs:run' r_id=r.pk %}">View</a></td>
+			</tr>
+		{% empty %}
+			<tr><td colspan="100">No runs..</td></tr>
+		{% endfor %}
+	</table>
+
+
+<h2>Create new run</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show create panel" data-hide-msg="Hide create panel">Show create panel</button>
 	</div>
-	<div class="div-ajax div-data display-none">
-		{% include "devices/device_measurements.html" with device=object measurements_page=measurements_page measurements_extra=measurements_extra only %}
+	<div class="div-show-hide-panel display-none">
+		{% include 'devices/add_run.html' with device=object form=run_add_form csrf_token=csrf_token only %}
 	</div>
 
-	<div class="div-plot">
-		{% include "devices/device_plot.html" with device=object plot_date_form=plot_date_form csrf_token=csrf_token only %}
+
+<h2>Unassigned measurements (total: {{object.num_unassigned_measurements|intcomma}})</h2>
+	<div class="div-ajax">
+		{% include "devices/device_unassigned_measurements.html" with device=object measurements_page=measurements_page measurements_l=measurements_l measurements_extra=measurements_extra csrf_token=csrf_token only %}
 	</div>
 
 
