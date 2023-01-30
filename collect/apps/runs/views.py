@@ -178,6 +178,7 @@ class PlotContextData:
             'xlimits': xlim_e,
             'xticks': xticks_e,
             'xticklabels': xticklabels,
+            'new_xticks_url': reverse('runs:get-new-xticks', kwargs={'r_id': run.pk}),
         }
 
     def get_plot_xaxis_context_data(self):
@@ -185,6 +186,20 @@ class PlotContextData:
 
         xlim_dt = self._calculate_xaxis_limits()
 
+        xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
+        xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
+        xticklabels = self._calculate_xticklabels(xticks_dt)
+
+        return {
+            'xlimits': xlim_e,
+            'xticks': xticks_e,
+            'xticklabels': xticklabels,
+        }
+
+    def get_xticks_context_data(self, xlim_e):
+        run = self.run
+
+        xlim_dt = tuple(datetime.fromtimestamp(e, settings.LOCAL_TIMEZONE) for e in xlim_e)
         xlim_e = tuple(dt.timestamp() for dt in xlim_dt)
         xticks_e, xticks_dt = self._calculate_xticks(*xlim_dt)
         xticklabels = self._calculate_xticklabels(xticks_dt)
@@ -513,6 +528,27 @@ class RunNewestDataView(View):
         if run.device.has_plot:
             ctx = PlotContextData(run).get_plot_context_data(measurements=new_measurements, start_idx=num_measurements-len(new_measurements)+1)
             data['plot_ctx'] = ctx
+
+        return JsonResponse(data)
+
+
+class RunNewXticksView(View):
+
+    def get_object(self):
+        return get_object_or_404(Run.objects, device__user=self.request.user, pk=self.kwargs['r_id'])
+
+    def get(self, request, *args, **kwargs):
+        run = self.get_object()
+
+        try:
+            xlimits = list(map(float, request.GET.getlist('xlimits[]')))
+        except Exception:
+            return JsonResponse({'status': 'error'}, status=500)
+
+        if len(xlimits) != 2:
+            JsonResponse({'status': 'error'}, status=500)
+
+        data = PlotContextData(run).get_xticks_context_data(xlimits)
 
         return JsonResponse(data)
 

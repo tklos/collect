@@ -34,6 +34,7 @@ $(document).ready(function() {
 		datasets.push(dataset);
 	}
 
+	/* Chart settings */
 	config = {
 		type: "line",
 		data: {
@@ -43,6 +44,11 @@ $(document).ready(function() {
 			xlimits: data.xlimits,
 			xticks: data.xticks,
 			xticklabels: data.xticklabels,
+			zoom_history: [],
+			/* If true, it's not a real zooming action, but triggered by resetZoom during going back in zoom history.
+			   Without resetZoom, not all data will be visible after zoom out */
+			/* There is a bug when ylimits might be incorrect after zooming out */
+			resetting_zoom: false,
 		},
 		options: {
 			spanGaps: true,
@@ -66,6 +72,53 @@ $(document).ready(function() {
 					callbacks: {
 						title: function(context) {
 							return config.data.titles[context[0].dataIndex];
+						},
+					},
+				},
+				zoom: {
+					zoom: {
+						drag: {
+							enabled: true,
+						},
+						mode: 'x',
+						onZoomStart: function({chart}) {
+							config.data.zoom_history.push({
+								xlimits: config.data.xlimits,
+								xticks: config.data.xticks,
+								xticklabels: config.data.xticklabels,
+							});
+						},
+						onZoomComplete: function({chart}) {
+							if (config.data.resetting_zoom)
+								return;
+
+							var new_xlimits = [chart.scales.x.start, chart.scales.x.end];
+
+							var request_data = {
+								xlimits: new_xlimits,
+							};
+
+							/* Send AJAX request to get xticks and labels for the new xlimits */
+							$.ajax({
+								type: "GET",
+								url: data.new_xticks_url,
+								data: request_data,
+								contentType: "application/json; charset=utf-8",
+								dataType: "json",
+								async: false,
+
+								success: function(data) {
+									config.data.xlimits = new_xlimits;
+									config.data.xticks = data.xticks;
+									config.data.xticklabels = data.xticklabels;
+
+									chart.update();
+								},
+
+								error: function(data) {
+									alert("Request failed (error " + data.status + ": " + data.statusText + "); please reload page");
+								},
+							});
 						},
 					},
 				},
@@ -98,6 +151,45 @@ $(document).ready(function() {
 	var chart_el = $("#measurements_plot");
 
 	plot = new Chart(chart_el, config);
+
+
+	/* Zoom */
+	$("body").on("click", "button.btn-zoom-back", function(event) {
+		if (config.data.zoom_history.length === 0)
+			return;
+
+		/* resetZoom is needed to make all data visible again after zooming out. Not sure why.. */
+		config.data.resetting_zoom = true;
+		plot.resetZoom();
+		config.data.resetting_zoom = false;
+
+		zoom = config.data.zoom_history.pop();
+
+		config.data.xlimits = zoom.xlimits;
+		config.data.xticks = zoom.xticks;
+		config.data.xticklabels = zoom.xticklabels;
+
+		plot.update();
+	});
+
+	$("body").on("click", "button.btn-zoom-reset", function(event) {
+		if (config.data.zoom_history.length === 0)
+			return;
+
+		config.data.resetting_zoom = true;
+		plot.resetZoom();
+		config.data.resetting_zoom = false;
+
+		zoom = config.data.zoom_history[0];
+		config.data.zoom_history = [];
+
+		config.data.xlimits = zoom.xlimits;
+		config.data.xticks = zoom.xticks;
+		config.data.xticklabels = zoom.xticklabels;
+
+		plot.update();
+	});
+
 });
 
 

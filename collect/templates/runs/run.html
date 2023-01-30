@@ -6,9 +6,10 @@
 
 {% block head-extra %}
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.1.2/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.0/dist/chartjs-plugin-zoom.min.js"></script>
 {% endblock %}
 {% block head-extra-2 %}
-	{% with static_version=101 %}
+	{% with static_version=102 %}
 		<script src="{% static 'js/plot.js' %}?v={{static_version}}"></script>
 		<script src="{% static 'js/map.js' %}?v={{static_version}}"></script>
 		<script src="{% static 'js/update.js' %}?v={{static_version}}"></script>
@@ -154,6 +155,10 @@
 {% if object.device.has_plot %}
 	<h2>Plot</h2>
 		<canvas id="measurements_plot"></canvas>
+		<div class="zoom-buttons">
+			<button type="button" class="btn btn-default btn-zoom-back">Zoom back</button>
+			<button type="button" class="btn btn-default btn-zoom-reset">Reset zoom</button>
+		</div>
 		{{plot_data|json_script:"id-plot-data"}}
 {% endif %}
 

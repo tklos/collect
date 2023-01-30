@@ -204,6 +204,17 @@ label {
 }
 
 
+/* Plot zoom */
+.zoom-buttons {
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+.btn-zoom-reset {
+	margin-left: 20px;
+}
+
+
 /* Map */
 #map {
 	width: 100%;
