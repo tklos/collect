@@ -1,0 +1,36 @@
+
+<form method="post" action="{% url 'devices:add-run' d_sid=device.sequence_id %}">
+    {% csrf_token %}
+    <table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
+        <tr>
+			<td>{{form.name.label_tag}}</td>
+			<td>{{form.name}}</td>
+			<td style="width:600px"></td>
+		</tr>
+        <tr>
+			<td><label>Time:</label></td>
+			<td>
+				<table>
+					<tr>
+						<td class="padding-b-2"><label>From:</label></td>
+						<td class="padding-l-st padding-b-2">{{form.date_from}}</td>
+					</tr>
+					<tr>
+						<td><label>To:</label></td>
+						<td class="padding-l-st">{{form.date_to}}</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+        {% if form.errors %}
+            {% include "common/form_errors.html" with form=form trclass="form-panel-errors" colspan=4 only %}
+        {% endif %}
+		<tr>
+            <td></td>
+            <td>
+                <input type="submit" value="Submit" class="btn btn-primary"/>
+            </td>
+        </tr>
+	</table>
+</form>
+

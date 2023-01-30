@@ -1,12 +1,14 @@
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
-from django.db import models
-from django.db.models import Max
+from django.db import models, transaction
+from django.db.models import JSONField, Max
 from django.db.models.functions import Coalesce
 from django.utils.functional import cached_property
 
-from .functions import calculate_hash
 from . import const
+from .functions import calculate_hash
 
 
 class Device(models.Model):
@@ -34,14 +36,28 @@ class Device(models.Model):
         return '{}{}'.format(self.token, '*' * (const.DEVICE_API_KEY_LEN - const.DEVICE_TOKEN_LEN))
 
     @cached_property
-    def num_measurements(self):
-        try:
-            return self.measurement_set__count
-        except AttributeError:
-            return self.measurement_set.count()
+    def num_runs(self):
+        return self.run_set.count()
 
-    def get_num_measurements_display(self):
-        return self.num_measurements or ''
+    @cached_property
+    def num_measurements(self):
+        return self.measurement_set.count()
+
+    @cached_property
+    def unassigned_measurements(self):
+        return self.measurement_set.filter(run__isnull=True)
+
+    @cached_property
+    def num_unassigned_measurements(self):
+        return self.unassigned_measurements.count()
+
+    @property
+    def has_plot(self):
+        return not self.has_map
+
+    @property
+    def has_map(self):
+        return 'lat' in self.columns and 'lon' in self.columns
 
     def get_time_range_display(self):
         if not self.num_measurements:
@@ -49,13 +65,17 @@ class Device(models.Model):
 
         qs = self.measurement_set.order_by('date_added')
         first, last = qs[0], qs.reverse()[0]
-        return f'{first.date_added:%Y-%m-%d %H:%M:%S} &mdash; {last.date_added:%Y-%m-%d %H:%M:%S}'
+        first_dt, last_dt = first.date_added, last.date_added + timedelta(minutes=1)
+
+        return f'{first_dt.astimezone(settings.LOCAL_TIMEZONE):%Y-%m-%d %H:%M} &mdash; {last_dt.astimezone(settings.LOCAL_TIMEZONE):%Y-%m-%d %H:%M}'
 
     def is_matching_api_key(self, api_key):
         return calculate_hash(api_key, self.salt) == self.api_key_hash
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         if self.pk is None:
+            get_user_model().objects.select_for_update().get(pk=self.user.pk)
             last_seq_id = (
                 Device
                 .objects

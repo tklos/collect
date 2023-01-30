@@ -1,0 +1,179 @@
+{% extends "common/base.html" %}
+
+{% load static %}
+{% load humanize %}
+
+
+{% block head-extra %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.1.2/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.0/dist/chartjs-plugin-zoom.min.js"></script>
+{% endblock %}
+{% block head-extra-2 %}
+	{% with static_version=102 %}
+		<script src="{% static 'js/plot.js' %}?v={{static_version}}"></script>
+		<script src="{% static 'js/map.js' %}?v={{static_version}}"></script>
+		<script src="{% static 'js/update.js' %}?v={{static_version}}"></script>
+	{% endwith %}
+{% endblock %}
+
+
+{% block title %}Device {{object.device.name}}, Run {{object.name}} {% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url 'devices:device' d_sid=object.device.sequence_id %}">Device {{object.device.name}}</a></li>
+<li><a href="{% url 'runs:run' r_id=object.pk %}">Run {{object.name}}</a></li>
+{% endblock %}
+
+
+{% load common_tags %}
+
+
+{% block content %}
+
+
+<h1>Run {{object.name}}</h1>
+
+
+<h2>Details</h2>
+	<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
+		<tr>
+			<td><label>Device:</label></td>
+			<td>{{object.device.name}}</td>
+		</tr>
+		<tr>
+			<td><label>Columns:</label></td>
+			<td>{{object.device.columns|join:", "}}</td>
+		</tr>
+		<tr>
+			<td><label>Date from:</label></td>
+			<td>{{object.get_date_from_display}}</td>
+		</tr>
+		<tr>
+			<td><label>Date to:</label></td>
+			<td>
+				<table><tr>
+					<td>{{object.get_date_to_display}}</td>
+					{% if not object.date_to %}
+						<td>
+							<form method="post" action="{% url 'runs:finalise' r_id=run.pk %}">
+								{% csrf_token %}
+
+								<a href ="#" type="button" class="btn-finalise-run" data-toggle="modal" data-target="#finalise-run-modal">Finalise run</a>
+
+								<div id="finalise-run-modal" class="modal fade" role="dialog" tabindex="-1">
+									<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal">&times;</button>
+												<h4 class="modal-title">Finalise run</h4>
+											</div>
+											<div class="modal-body">
+												Are you sure you want to finalise this run?
+											</div>
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default" data-dismiss="modal">
+													Cancel
+												</button>
+												<input type="submit" value="Finalise run" class="btn btn-primary"/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</td>
+					{% endif %}
+					{% if can_be_trimmed %}
+						<td>
+							<form method="post" id="form-trim-run" action="{% url 'runs:trim' r_id=run.pk %}">
+								{% csrf_token %}
+
+								<a href ="#" type="button" class="btn-finalise-run" data-toggle="modal" data-target="#trim-run-modal">Trim run to data</a>
+
+								<div id="trim-run-modal" class="modal fade" role="dialog" tabindex="-1">
+									<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal">&times;</button>
+												<h4 class="modal-title">Trim run to data</h4>
+											</div>
+											<div class="modal-body">
+												Are you sure you want to set this run's timerange to the actual data it contains?
+											</div>
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default" data-dismiss="modal">
+													Cancel
+												</button>
+												<input type="submit" value="Trim run" class="btn btn-primary"/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</td>
+					{% endif %}
+				</tr></table>
+			</td>
+		</tr>
+		<tr>
+			<td><label>Num meas.:</label></td>
+			<td><div class="num-measurements">{{num_measurements|intcomma}}</div></td>
+		</tr>
+	</table>
+
+
+<h2>Download data</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show download panel" data-hide-msg="Hide download panel">Show download panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		{% include "runs/run_download_data.html" with run=object csrf_token=csrf_token only %}
+	</div>
+
+
+<h2>Delete data</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show data panel" data-hide-msg="Hide data panel">Show delete panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		{% include "runs/run_delete_run_detach_data.html" with run=object csrf_token=csrf_token only %}
+		{% include "runs/run_delete_run_and_data.html" with run=object csrf_token=csrf_token only %}
+	</div>
+
+
+<h2>Data</h2>
+	<div class="div-show-hide-panel-link">
+		<button type="button" class="btn btn-link btn-show-hide-panel" data-show-msg="Show data panel" data-hide-msg="Hide data panel">Show data panel</button>
+	</div>
+	<div class="div-show-hide-panel display-none">
+		<div class="div-ajax div-measurements-table">
+			{% include "runs/run_measurements.html" with run=object measurements_page=measurements_page measurements_l=measurements_l measurements_extra=measurements_extra csrf_token=csrf_token only %}
+		</div>
+	</div>
+
+
+{% if object.device.has_plot %}
+	<h2>Plot</h2>
+		<canvas id="measurements_plot"></canvas>
+		<div class="zoom-buttons">
+			<button type="button" class="btn btn-default btn-zoom-back">Zoom back</button>
+			<button type="button" class="btn btn-default btn-zoom-reset">Reset zoom</button>
+		</div>
+		{{plot_data|json_script:"id-plot-data"}}
+{% endif %}
+
+{% if object.device.has_map %}
+	<h2>Map</h2>
+		<div id="map"></div>
+		{{locations_l|json_script:"id-locations-l"}}
+		<script async src="https://maps.googleapis.com/maps/api/js?key={{MAPS_API_KEY}}&callback=init_map" defer></script>
+{% endif %}
+
+
+{{get_newest_data|json_script:"id-get-newest-data"}}
+
+
+<div class="margin-bottom-200px"></div>
+
+{% endblock %}
+

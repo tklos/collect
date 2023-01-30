@@ -1,5 +1,5 @@
 
-<form method="post" action="{% url 'devices:add' %}">
+<form method="post" action="{% url 'profile:add-device' %}">
     {% csrf_token %}
     <table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle">
         <tr>
@@ -12,7 +12,7 @@
 			<td>{{form.columns}}</td>
 		</tr>
         {% if form.errors %}
-            {% include "common/form_errors.html" with form=form colspan=3 only %}
+            {% include "common/form_errors.html" with form=form trclass="form-panel-errors" colspan=3 only %}
         {% endif %}
 		<tr>
             <td></td>

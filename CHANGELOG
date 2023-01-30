@@ -1,4 +1,10 @@
 
+ ** v2.0.0   30.01.2023
+    - Add runs
+    - Add google map
+    - Add zooming to plot
+
+
  ** v1.1.0   16.11.2020
     - Add downloading data
     - Add deleting devices and data

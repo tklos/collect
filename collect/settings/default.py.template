@@ -21,3 +21,6 @@ DATABASES = {
     }
 }
 
+
+MAPS_API_KEY =
+
