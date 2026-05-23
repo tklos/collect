@@ -59,5 +59,5 @@ $(document).ready(function() {
     last_record_time = settings.last_record_time;
 
     if (settings.needs_updating)
-        setInterval(update_data, 60000, settings);
+        setInterval(update_data, 20000, settings);
 });
