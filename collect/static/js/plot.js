@@ -196,17 +196,6 @@ function update_plot(ctx) {
 }
 
 
-function update_plot_xaxis(ctx) {
-	if (config.data.zoom_history.length === 0) {
-		config.data.xlimits = ctx.xlimits;
-		config.data.xticks = ctx.xticks;
-		config.data.xticklabels = ctx.xticklabels;
-
-		plot.update();
-	}
-}
-
-
 function fetch_and_apply_xticks(new_xlimits) {
 	var request_data = {
 		xlimits: new_xlimits,

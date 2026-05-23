@@ -27,12 +27,8 @@ function update_data(settings) {
         dataType: "json",
 
         success: function(data) {
-            if (!data.any_new) {
-                /* Update only plot's x-axis limits */
-                if (settings.has_plot)
-                    update_plot_xaxis(data.plot_ctx);
+            if (!data.any_new)
                 return;
-            }
 
             last_record_time = data.last_record_time;
 
