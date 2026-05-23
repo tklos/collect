@@ -44,6 +44,7 @@ $(document).ready(function() {
 			xlimits: data.xlimits,
 			xticks: data.xticks,
 			xticklabels: data.xticklabels,
+			new_xticks_url: data.new_xticks_url,
 			zoom_history: [],
 			/* If true, it's not a real zooming action, but triggered by resetZoom during going back in zoom history.
 			   Without resetZoom, not all data will be visible after zoom out */
@@ -93,32 +94,9 @@ $(document).ready(function() {
 								return;
 
 							var new_xlimits = [chart.scales.x.start, chart.scales.x.end];
+							fetch_and_apply_xticks(new_xlimits);
 
-							var request_data = {
-								xlimits: new_xlimits,
-							};
-
-							/* Send AJAX request to get xticks and labels for the new xlimits */
-							$.ajax({
-								type: "GET",
-								url: data.new_xticks_url,
-								data: request_data,
-								contentType: "application/json; charset=utf-8",
-								dataType: "json",
-								async: false,
-
-								success: function(data) {
-									config.data.xlimits = new_xlimits;
-									config.data.xticks = data.xticks;
-									config.data.xticklabels = data.xticklabels;
-
-									chart.update();
-								},
-
-								error: function(data) {
-									alert("Request failed (error " + data.status + ": " + data.statusText + "); please reload page");
-								},
-							});
+							chart.update();
 						},
 					},
 				},
@@ -154,6 +132,7 @@ $(document).ready(function() {
 
 
 	/* Zoom */
+
 	$("body").on("click", "button.btn-zoom-back", function(event) {
 		if (config.data.zoom_history.length === 0)
 			return;
@@ -163,11 +142,16 @@ $(document).ready(function() {
 		plot.resetZoom();
 		config.data.resetting_zoom = false;
 
-		zoom = config.data.zoom_history.pop();
+		var zoom = config.data.zoom_history.pop();
 
-		config.data.xlimits = zoom.xlimits;
-		config.data.xticks = zoom.xticks;
-		config.data.xticklabels = zoom.xticklabels;
+		if (config.data.zoom_history.length === 0) {
+			/* Fully zoomed out — recalculate to include any new data */
+			recalculate_full_xlimits();
+		} else {
+			config.data.xlimits = zoom.xlimits;
+			config.data.xticks = zoom.xticks;
+			config.data.xticklabels = zoom.xticklabels;
+		}
 
 		plot.update();
 	});
@@ -180,12 +164,9 @@ $(document).ready(function() {
 		plot.resetZoom();
 		config.data.resetting_zoom = false;
 
-		zoom = config.data.zoom_history[0];
 		config.data.zoom_history = [];
 
-		config.data.xlimits = zoom.xlimits;
-		config.data.xticks = zoom.xticks;
-		config.data.xticklabels = zoom.xticklabels;
+		recalculate_full_xlimits();
 
 		plot.update();
 	});
@@ -225,3 +206,34 @@ function update_plot_xaxis(ctx) {
 	}
 }
 
+
+function fetch_and_apply_xticks(new_xlimits) {
+	var request_data = {
+		xlimits: new_xlimits,
+	};
+
+	$.ajax({
+		type: "GET",
+		url: config.data.new_xticks_url,
+		data: request_data,
+		contentType: "application/json; charset=utf-8",
+		dataType: "json",
+		async: false,
+
+		success: function(data) {
+			config.data.xlimits = new_xlimits;
+			config.data.xticks = data.xticks;
+			config.data.xticklabels = data.xticklabels;
+		},
+
+		error: function(data) {
+			alert("Request failed (error " + data.status + ": " + data.statusText + "); please reload page");
+		},
+	});
+}
+
+
+function recalculate_full_xlimits() {
+	var points = config.data.datasets[0].data;
+	fetch_and_apply_xticks([points[0].x, points[points.length - 1].x]);
+}
