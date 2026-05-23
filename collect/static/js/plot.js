@@ -204,20 +204,24 @@ function update_plot(ctx) {
 					dataset_data.push({x: ctx.time[time_idx], y: ctx.data[idx][time_idx]});
 	}
 
-	/* Update x axis */
-	config.data.xlimits = ctx.xlimits;
-	config.data.xticks = ctx.xticks;
-	config.data.xticklabels = ctx.xticklabels;
+	/* Update x axis only if not zoomed in */
+	if (config.data.zoom_history.length === 0) {
+		config.data.xlimits = ctx.xlimits;
+		config.data.xticks = ctx.xticks;
+		config.data.xticklabels = ctx.xticklabels;
+	}
 
 	plot.update();
 }
 
 
 function update_plot_xaxis(ctx) {
-	config.data.xlimits = ctx.xlimits;
-	config.data.xticks = ctx.xticks;
-	config.data.xticklabels = ctx.xticklabels;
+	if (config.data.zoom_history.length === 0) {
+		config.data.xlimits = ctx.xlimits;
+		config.data.xticks = ctx.xticks;
+		config.data.xticklabels = ctx.xticklabels;
 
-	plot.update();
+		plot.update();
+	}
 }
 
