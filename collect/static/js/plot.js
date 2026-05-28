@@ -164,6 +164,19 @@ $(document).ready(function() {
 		plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 	});
 
+	/* Toggle points visibility */
+	$("body").on("click", "button.btn-toggle-points", function(event) {
+		var showPoints = plot.data.datasets[0].pointRadius === 0;
+		var newRadius = showPoints ? 3 : 0;
+
+		for (var ds of plot.data.datasets) {
+			ds.pointRadius = newRadius;
+		}
+
+		$(this).text(showPoints ? "Hide Points" : "Show Points");
+		plot.update();
+	});
+
 });
 
 
