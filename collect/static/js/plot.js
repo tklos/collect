@@ -46,10 +46,6 @@ $(document).ready(function() {
 			xticklabels: data.xticklabels,
 			new_xticks_url: data.new_xticks_url,
 			zoom_history: [],
-			/* If true, it's not a real zooming action, but triggered by resetZoom during going back in zoom history.
-			   Without resetZoom, not all data will be visible after zoom out */
-			/* There is a bug when ylimits might be incorrect after zooming out */
-			resetting_zoom: false,
 		},
 		options: {
 			spanGaps: true,
@@ -90,9 +86,6 @@ $(document).ready(function() {
 							});
 						},
 						onZoomComplete: function({chart}) {
-							if (config.data.resetting_zoom)
-								return;
-
 							var new_xlimits = [chart.scales.x.start, chart.scales.x.end];
 							fetch_and_apply_xticks(new_xlimits);
 
@@ -137,11 +130,6 @@ $(document).ready(function() {
 		if (config.data.zoom_history.length === 0)
 			return;
 
-		/* resetZoom is needed to make all data visible again after zooming out. Not sure why.. */
-		config.data.resetting_zoom = true;
-		plot.resetZoom();
-		config.data.resetting_zoom = false;
-
 		var zoom = config.data.zoom_history.pop();
 
 		if (config.data.zoom_history.length === 0) {
@@ -153,22 +141,20 @@ $(document).ready(function() {
 			config.data.xticklabels = zoom.xticklabels;
 		}
 
-		plot.update();
+		/* Use zoomScale to set X range - this lets Chart.js auto-calculate Y limits */
+		plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 	});
 
 	$("body").on("click", "button.btn-zoom-reset", function(event) {
 		if (config.data.zoom_history.length === 0)
 			return;
 
-		config.data.resetting_zoom = true;
-		plot.resetZoom();
-		config.data.resetting_zoom = false;
-
 		config.data.zoom_history = [];
 
 		recalculate_full_xlimits();
 
-		plot.update();
+		/* Use zoomScale to set X range - this lets Chart.js auto-calculate Y limits */
+		plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 	});
 
 });
