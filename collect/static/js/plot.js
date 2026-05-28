@@ -30,6 +30,8 @@ $(document).ready(function() {
 		dataset.borderColor = COLOURS[ds_idx];
 		dataset.backgroundColor = COLOURS[ds_idx];
 		dataset.fill = false;
+		dataset.pointRadius = 0;  /* Don't draw points - major performance improvement */
+		dataset.parsing = false;  /* Data is already in {x, y} format - skip parsing */
 
 		datasets.push(dataset);
 	}
@@ -50,6 +52,11 @@ $(document).ready(function() {
 		options: {
 			spanGaps: true,
 			plugins: {
+				// decimation: {
+				// 	enabled: true,
+				// 	algorithm: 'lttb',  /* Largest Triangle Three Buckets - preserves visual shape */
+				// 	samples: 500,  /* Max points to render when zoomed out */
+				// },
 				tooltip: {
 					mode: "index",
 					intersect: false,
