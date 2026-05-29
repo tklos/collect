@@ -185,6 +185,10 @@ function update_plot(ctx) {
 	for (t of ctx.titles)
 			config.data.titles.push(t);
 
+	/* Update labels (x-axis values) */
+	for (var time_idx = 0; time_idx < ctx.time.length; time_idx++)
+		plot.data.labels.push(ctx.time[time_idx]);
+
 	for (var idx = 0; idx < config.data.datasets.length; idx++) {
 			var dataset_data = config.data.datasets[idx].data;
 			for (var time_idx = 0; time_idx < ctx.time.length; time_idx++)
