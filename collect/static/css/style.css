@@ -88,6 +88,10 @@ td.td-ul-no-margin-bottom ul {
 	color: red;
 }
 
+.btn-bulk-delete-measurements {
+	margin-left: 50px;
+}
+
 tr.strikeout td {
 	position: relative;
 }
@@ -106,7 +110,7 @@ tr.strikeout td:before {
 	margin-bottom: 0px;
 }
 .pagination-bottom {
-	margin-top: 10px;
+	margin-top: 5px;
 	margin-bottom: 0px;
 }
 
@@ -201,6 +205,12 @@ label {
 
 .input-font-size-14 {
 	font-size: 14px !important;
+}
+
+.div-measurements-top-controls {
+	display:flex;
+	align-items:center;
+	margin-bottom: 5px;
 }
 
 

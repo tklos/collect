@@ -5,10 +5,16 @@
 {% load common_tags %}
 
 
-{% include "common/pagination.html" with paginator_page=measurements_page pagination_class="pagination-top" ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
+<div class="div-measurements-top-controls">
+	{% include "common/pagination.html" with paginator_page=measurements_page pagination_class="pagination-top" ajax_url="runs:pagination-measurements" extra=measurements_extra only %}
+	<button class="btn btn-sm btn-danger btn-bulk-delete-measurements" disabled>Delete selected</button>
+</div>
 
 <table class="table table-bordered table-condensed table-padding-3 no-margin-bottom table-td-vertical-align-middle table-ajax">
 	<tr>
+		<th class="width-1px horizontal-align-center">
+			<input type="checkbox" class="measurement-select-all" title="Select all">
+		</th>
 		<th class="width-1px horizontal-align-center">#</th>
 		<th>Date added</th>
 		{% for column in run.device.columns %}
@@ -22,6 +28,9 @@
 	</tr>
 	{% for idx, m, t, d in measurements_l %}
 		<tr>
+			<td class="horizontal-align-center">
+				<input type="checkbox" class="measurement-select-checkbox" data-url="{% url 'measurements:delete' m_id=m.id %}" data-csrftoken="{{csrf_token}}">
+			</td>
 			<td class="horizontal-align-right">{{idx}}</td>
 			<td>{{m.date_added|date:'Y-m-d H:i:s'}}</td>
 			{% for value in m.data %}
