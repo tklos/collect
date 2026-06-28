@@ -54,6 +54,13 @@ $(document).ready(function() {
     var settings = JSON.parse(document.getElementById("id-get-newest-data").textContent);
     last_record_time = settings.last_record_time;
 
-    if (settings.needs_updating)
+    if (settings.needs_updating) {
         setInterval(update_data, 20000, settings);
+
+        // /* Fetch immediately when tab becomes visible again */
+        // document.addEventListener("visibilitychange", function() {
+        //     if (!document.hidden)
+        //         update_data(settings);
+        // });
+    }
 });

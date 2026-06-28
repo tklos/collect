@@ -85,15 +85,27 @@ $(document).ready(function() {
 							enabled: true,
 						},
 						mode: 'x',
-						onZoomStart: function({chart}) {
-							config.data.zoom_history.push({
-								xlimits: config.data.xlimits,
-								xticks: config.data.xticks,
-								xticklabels: config.data.xticklabels,
-							});
-						},
+						// Push history in onZoomComplete
+						// onZoomStart: function({chart}) {
+						// 	config.data.zoom_history.push({
+						// 		xlimits: config.data.xlimits,
+						// 		xticks: config.data.xticks,
+						// 		xticklabels: config.data.xticklabels,
+						// 	});
+						// },
 						onZoomComplete: function({chart}) {
 							var new_xlimits = [chart.scales.x.start, chart.scales.x.end];
+
+							// Ignore no-op zooms
+							if (new_xlimits[0] === config.data.xlimits[0] && new_xlimits[1] === config.data.xlimits[1])
+								return;
+
+							config.data.zoom_history.push({
+								xlimits: [...config.data.xlimits],
+								xticks: [...config.data.xticks],
+								xticklabels: [...config.data.xticklabels],
+							});
+
 							fetch_and_apply_xticks(new_xlimits);
 
 							chart.update();
@@ -146,10 +158,12 @@ $(document).ready(function() {
 			config.data.xlimits = zoom.xlimits;
 			config.data.xticks = zoom.xticks;
 			config.data.xticklabels = zoom.xticklabels;
+
+			plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 		}
 
 		/* Use zoomScale to set X range - this lets Chart.js auto-calculate Y limits */
-		plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
+		// plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 	});
 
 	$("body").on("click", "button.btn-zoom-reset", function(event) {
@@ -161,7 +175,7 @@ $(document).ready(function() {
 		recalculate_full_xlimits();
 
 		/* Use zoomScale to set X range - this lets Chart.js auto-calculate Y limits */
-		plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
+		// plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 	});
 
 	/* Toggle points visibility */
@@ -220,9 +234,11 @@ function fetch_and_apply_xticks(new_xlimits) {
 		async: false,
 
 		success: function(data) {
-			config.data.xlimits = new_xlimits;
+			config.data.xlimits = data.xlimits;
 			config.data.xticks = data.xticks;
 			config.data.xticklabels = data.xticklabels;
+
+			plot.zoomScale('x', {min: config.data.xlimits[0], max: config.data.xlimits[1]}, 'default');
 		},
 
 		error: function(data) {
